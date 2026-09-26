@@ -1,0 +1,40 @@
+{
+  "slug": "zamil-shop-bd",
+  "name": { "en": "Zamil Shop BD", "bn": "জামিল শপ বিডি" },
+  "tagline": { "en": "Little joys, safely delivered", "bn": "ছোট্ট সোনামণির আনন্দ, নিরাপদে পৌঁছে দিই" },
+  "description": {
+    "en": "Baby clothing, toys, feeding & nursing, diapers, nursery and bath essentials for little ones up to 5 years. Cash on Delivery across Bangladesh.",
+    "bn": "০–৫ বছরের সোনামণিদের জামা, খেলনা, ফিডিং, ডায়াপার, নার্সারি ও গোসলের প্রয়োজনীয় সবকিছু। সারা বাংলাদেশে ক্যাশ অন ডেলিভারি।"
+  },
+  "domain": "zamilshopbd.com",
+  "defaultLang": "bn",
+  "orderPrefix": "ZSB",
+  "skuPrefix": "BBY",
+  "invoicePrefix": "INV-BBY",
+  "location": {
+    "city": { "en": "Dhaka", "bn": "ঢাকা" },
+    "address": { "en": "House 12, Road 5, Mirpur 10, Dhaka 1216", "bn": "বাড়ি ১২, রোড ৫, মিরপুর ১০, ঢাকা ১২১৬" },
+    "postcode": "1216",
+    "lat": 23.8069,
+    "lng": 90.3687
+  },
+  "contact": {
+    "phone": "+8801700000000",
+    "whatsapp": "8801700000000",
+    "email": "hello@zamilshopbd.com",
+    "hours": { "en": "Every day, 10am – 9pm", "bn": "প্রতিদিন, সকাল ১০টা – রাত ৯টা" }
+  },
+  "social": { "facebook": "", "instagram": "", "tiktok": "" },
+  "colors": {
+    "yellow": "#FFE9A8",
+    "mint": "#C4EEDC",
+    "lavender": "#DED3F5",
+    "peach": "#FFD8C7",
+    "sky": "#CFE7FA",
+    "pink": "#FBD3E0",
+    "primary": "#2A7A68",
+    "primaryDark": "#1E5E50",
+    "ink": "#35304A",
+    "theme": "#FFE9A8"
+  }
+}
