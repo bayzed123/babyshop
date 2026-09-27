@@ -107,9 +107,9 @@ writeFileSync(
   Cache-Control: no-cache
 
 /js/*
-  Cache-Control: public, max-age=31536000, immutable
+  Cache-Control: public, max-age=600
 /css/*
-  Cache-Control: public, max-age=31536000, immutable
+  Cache-Control: public, max-age=600
 /img/*
   Cache-Control: public, max-age=604800
 /data/*
@@ -156,7 +156,7 @@ for (const p of products) {
 for (const [code, n] of Object.entries(seq)) lines.push(`INSERT INTO counters (name, value) VALUES (${q(`sku:${code}`)}, ${n});`);
 for (const b of banners) {
   lines.push(
-    `INSERT INTO banners (placement, title_en, title_bn, subtitle_en, subtitle_bn, cta_en, cta_bn, link_url, color, sort_order) VALUES (${q(b.placement)}, ${q(b.titleEn)}, ${q(b.titleBn)}, ${q(b.subEn)}, ${q(b.subBn)}, ${q(b.ctaEn)}, ${q(b.ctaBn)}, ${q(b.link)}, ${q(b.color)}, ${b.sort});`,
+    `INSERT INTO banners (placement, title_en, title_bn, subtitle_en, subtitle_bn, cta_en, cta_bn, link_url, image_url, color, sort_order) VALUES (${q(b.placement)}, ${q(b.titleEn)}, ${q(b.titleBn)}, ${q(b.subEn)}, ${q(b.subBn)}, ${q(b.ctaEn)}, ${q(b.ctaBn)}, ${q(b.link)}, ${q(b.image ?? null)}, ${q(b.color)}, ${b.sort});`,
   );
 }
 for (const c of coupons) lines.push(`INSERT INTO coupons (code, description, type, value, min_order, per_customer_limit) VALUES (${q(c.code)}, ${q(c.description)}, ${q(c.type)}, ${c.value}, ${c.min}, ${q(c.perCustomer ?? null)});`);

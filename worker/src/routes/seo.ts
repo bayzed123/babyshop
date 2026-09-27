@@ -126,6 +126,7 @@ interface Meta {
 
 async function shell(c: C, meta: Meta): Promise<Response> {
   const res = await c.env.ASSETS.fetch(new Request(new URL("/", c.req.url)));
+  if (!res.ok) return res;
   const rewriter = new HTMLRewriter()
     .on("title", { element: (el) => void el.setInnerContent(meta.title) })
     .on('meta[name="description"]', { element: (el) => void el.setAttribute("content", meta.description) })

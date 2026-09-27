@@ -178,12 +178,12 @@ export const banners = [
   {
     placement: "hero", titleEn: "Little joys, safely delivered", titleBn: "ছোট্ট সোনামণির আনন্দ, নিরাপদে পৌঁছে দিই",
     subEn: "Clothes, toys, feeding and nursery essentials for 0–5 years. Cash on Delivery across Bangladesh.", subBn: "০–৫ বছরের পোশাক, খেলনা, ফিডিং ও নার্সারির প্রয়োজনীয় জিনিস। সারা দেশে ক্যাশ অন ডেলিভারি।",
-    ctaEn: "Shop by age", ctaBn: "বয়স অনুযায়ী কিনুন", link: "/shop", color: "yellow", sort: 1,
+    ctaEn: "Shop by age", ctaBn: "বয়স অনুযায়ী কিনুন", link: "/shop", color: "yellow", sort: 1, image: "/img/products/plush-teddy-bear.svg",
   },
   {
     placement: "hero", titleEn: "Gifts they'll actually use", titleBn: "কাজের উপহার, মনের মতো",
     subEn: "Baby shower, aqiqah or first birthday — try our gift finder.", subBn: "বেবি শাওয়ার, আকিকা বা প্রথম জন্মদিন — গিফট ফাইন্ডার দেখুন।",
-    ctaEn: "Find a gift", ctaBn: "উপহার খুঁজুন", link: "/gift-finder", color: "lavender", sort: 2,
+    ctaEn: "Find a gift", ctaBn: "উপহার খুঁজুন", link: "/gift-finder", color: "lavender", sort: 2, image: "/img/products/welcome-baby-hamper.svg",
   },
 ];
 
