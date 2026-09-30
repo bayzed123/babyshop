@@ -47,7 +47,7 @@ export default async function products(view, { id, query }) {
     columns: [
       { label: { en: "Photo", bn: "ছবি" }, render: (p) => (p.image ? html`<img class="thumb" src="${p.image}" alt="" loading="lazy">` : "—") },
       { label: { en: "Product", bn: "পণ্য" }, render: (p) => html`<b>${lang() === "bn" ? p.name_bn : p.name_en}</b>${p.is_featured ? " ★" : ""}${p.is_gift ? " 🎁" : ""}<br><span class="muted small">${(p.skus ?? "").split(" ").slice(0, 2).join(" ")}${p.variant_count > 2 ? " …" : ""} · ${lang() === "bn" ? p.category_name_bn ?? "" : p.category_name ?? ""}</span>${p.age_ranges.length ? html`<br><span class="muted small">${p.age_ranges.join(" · ")}</span>` : ""}` },
-      { label: { en: "Price", bn: "দাম" }, render: (p) => html`<b>${money(p.sale_price ?? p.price)}</b>${p.sale_price ? html` <s class="muted small">${money(p.price)}</s>` : ""}` },
+      { label: { en: "Price", bn: "দাম" }, render: (p) => html`<b>${money(p.sale_price ?? p.price)}</b>${p.sale_price ? html` <s class="muted small">${money(p.price)}</s>` : ""}${p.delivery_mode === "free" ? html`<br><span class="small" style="color:#11704B">🚚 ${L("Free delivery", "ফ্রি ডেলিভারি")}</span>` : ""}` },
       { label: { en: "Stock", bn: "স্টক" }, render: (p) => html`${p.stock <= 0 ? pill("cancelled", L("Out", "শেষ")) : p.low_variants ? pill("pending", `${num(p.stock)} · ${num(p.low_variants)} ${L("low", "কম")}`) : pill("active", num(p.stock))}${p.waiting ? html`<br><span class="small">🔔 ${num(p.waiting)} ${t("waiting")}</span>` : ""}` },
       { label: { en: "Badges", bn: "ব্যাজ" }, render: (p) => (p.cert_count ? html`<span title="${t("docAttached")}">🛡 ${num(p.cert_count)}</span>` : html`<span class="muted">—</span>`) },
       { label: { en: "Sold", bn: "বিক্রি" }, render: (p) => num(p.sold_count) },
@@ -138,6 +138,10 @@ async function editor(id, cats, reload) {
         ].map(([v, l]) => html`<option value="${v}" ${offerOf(p) === v ? raw("selected") : ""}>${l}</option>`)}</select></label>
         <label class="field" data-show="percent flat"><span>${L("Discount amount", "ছাড়ের পরিমাণ")}</span><input class="input" name="discount_value" type="number" min="1" inputmode="numeric" value="${p.discount_value || ""}"></label>
         <label class="field" data-show="manual"><span>${L("Sale price (৳)", "ছাড়ের দাম (৳)")}</span><input class="input" name="sale_price" type="number" min="0" inputmode="numeric" value="${p.sale_price ?? ""}"></label>
+        <label class="field" style="grid-column:1/-1"><span>${L("Delivery", "ডেলিভারি")}</span><select class="input" name="delivery_mode">
+          <option value="zone" ${p.delivery_mode !== "free" ? raw("selected") : ""}>${L("Delivery charge — calculated automatically from the customer's area", "ডেলিভারি চার্জ — গ্রাহকের এলাকা অনুযায়ী অটো হিসাব")}</option>
+          <option value="free" ${p.delivery_mode === "free" ? raw("selected") : ""}>${L("Free delivery — no delivery charge is shown or taken", "ফ্রি ডেলিভারি — কোনো ডেলিভারি চার্জ দেখাবে না বা নেওয়া হবে না")}</option></select>
+          <span class="hint">${L("If a cart mixes free and charged items, the area's delivery charge applies.", "কার্টে ফ্রি ও চার্জযুক্ত পণ্য একসাথে থাকলে এলাকার ডেলিভারি চার্জ প্রযোজ্য হবে।")}</span></label>
       </div></div>
 
       <div class="card"><h3>${t("images")}</h3><p class="muted small">${t("firstIsCover")}</p><div class="images" id="imgs"></div>
@@ -303,6 +307,7 @@ async function editor(id, cats, reload) {
       category_id: Number(fd.get("category_id")) || 0, status: fd.get("status"), tags: fd.get("tags") ?? "",
       age_ranges: fd.getAll("age_ranges"), is_featured: fd.get("is_featured") ? 1 : 0, is_gift: fd.get("is_gift") ? 1 : 0,
       price: Number(fd.get("price")) || 0,
+      delivery_mode: fd.get("delivery_mode") === "free" ? "free" : "zone",
       discount_type: offer === "percent" || offer === "flat" ? offer : "none",
       discount_value: offer === "percent" || offer === "flat" ? Number(fd.get("discount_value")) || 0 : 0,
       sale_price: offer === "manual" ? numOrNull(fd.get("sale_price")) : null,

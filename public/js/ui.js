@@ -25,6 +25,7 @@ export function productCard(p) {
       <img src="${p.images?.[0] ?? "/img/logo.svg"}" alt="" loading="lazy" width="400" height="400">
       ${p.discount_percent ? html`<span class="tag sale">-${num(p.discount_percent)}%</span>` : ""}
       ${!p.in_stock ? html`<span class="tag soldout">${t("outOfStock")}</span>` : ""}
+      ${p.delivery_mode === "free" ? html`<span class="tag free-ship">${icon("truck")} ${t("freeDelivery")}</span>` : ""}
     </a>
     <button class="wish ${saved ? "on" : ""}" type="button" data-wish="${p.id}" aria-pressed="${saved}" aria-label="${t("wishlist")}">${icon("heart")}</button>
     <div class="body">

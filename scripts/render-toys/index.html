@@ -1,0 +1,16 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Toy renders</title>
+  <script type="importmap">{ "imports": { "three": "/node_modules/three/build/three.module.js", "three/addons/": "/node_modules/three/examples/jsm/" } }</script>
+</head>
+<body>
+  <script type="module">
+    import { render } from "./studio.js";
+    import { MODELS } from "./toys.js";
+    window.renderToy = (name, opts = {}, view = {}) => render(MODELS[name](opts), view);
+    window.ready = true;
+  </script>
+</body>
+</html>

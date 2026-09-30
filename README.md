@@ -71,5 +71,5 @@ The brief left these open; sensible defaults were chosen and are easy to change:
 - **Delivery fees:** ৳70 inside Dhaka City (free over ৳2,000), ৳100 Dhaka suburbs, ৳120 rest of Dhaka Division, ৳130 elsewhere — Admin → Delivery zones.
 - **Fraud thresholds:** Trusted after 3 delivered orders with no refusals; velocity window 60 min (2 per phone, 3 per address, 4 per IP); abandoned after 30 min, deleted after 30 days.
 - **Referral:** friend gets ৳100 off a first order over ৳800; referrer gets a ৳100 coupon after delivery. **VAT** is off (5 % inclusive when switched on).
-- **Starter catalogue** of 19 sample products with generated illustrations — replace with real photos and prices. Infant formula is deliberately not seeded (Bangladesh Breast-milk Substitutes Act 2013 restricts its promotion).
+- **Starter catalogue** of 25 sample products — generated illustrations, plus studio-style 3D product renders for the six ride-on toys (motorcycle, commando bike, rickshaw, jeep, tricycle, excavator; `node scripts/render-toys.mjs` re-renders them). Replace with real photos and prices from Admin → Products. Infant formula is deliberately not seeded (Bangladesh Breast-milk Substitutes Act 2013 restricts its promotion).
 - **Courier fraud-check provider** is not named in the brief; any HTTP lookup returning total/delivered/returned counts works (`FRAUD_CHECK_API_URL`).

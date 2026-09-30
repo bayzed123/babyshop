@@ -60,7 +60,7 @@ export function discountPercent(price: number, sale: number | null): number {
 
 export interface CouponRule {
   code: string;
-  type: "percent" | "flat";
+  type: "percent" | "flat" | "free_delivery";
   value: number;
   min_order: number;
   max_discount: number | null;
@@ -80,7 +80,7 @@ export interface PricedLine {
 }
 
 export type CouponResult =
-  | { ok: true; discount: number; eligibleSubtotal: number }
+  | { ok: true; discount: number; eligibleSubtotal: number; freeDelivery?: boolean }
   | { ok: false; reason: "inactive" | "not_started" | "expired" | "used_up" | "min_order" | "no_eligible_items" | "not_yours" };
 
 export function evaluateCoupon(c: CouponRule, lines: PricedLine[], phone?: string | null, now = new Date()): CouponResult {
@@ -95,6 +95,8 @@ export function evaluateCoupon(c: CouponRule, lines: PricedLine[], phone?: strin
     ? lines.filter((l) => l.category_id != null && c.category_ids.includes(l.category_id)).reduce((s, l) => s + l.line_total, 0)
     : subtotal;
   if (eligible <= 0) return { ok: false, reason: "no_eligible_items" };
+  // A free-delivery coupon takes nothing off the goods; the delivery charge is waived instead.
+  if (c.type === "free_delivery") return { ok: true, discount: 0, eligibleSubtotal: eligible, freeDelivery: true };
   let discount = c.type === "percent" ? Math.floor((eligible * c.value) / 100) : c.value;
   if (c.max_discount != null) discount = Math.min(discount, c.max_discount);
   discount = Math.min(discount, eligible);

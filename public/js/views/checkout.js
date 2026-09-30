@@ -72,11 +72,23 @@ async function renderCart(el, navigate) {
   await draw();
 }
 
+/**
+ * Delivery line. Free delivery (free-delivery items, a free-delivery coupon or the area's free-over amount)
+ * never shows a charge; otherwise the charge is auto-calculated once the area is chosen.
+ */
+function deliveryRow(q) {
+  if (q.freeDelivery === "products" || q.freeDelivery === "coupon") {
+    return html`<div class="green"><span>${t("delivery")} <small>(${q.freeDelivery === "coupon" ? `${t("freeDeliveryCoupon")} ${q.couponCode ?? ""}`.trim() : t("freeDeliveryItems")})</small></span><b>${t("freeDelivery")}</b></div>`;
+  }
+  if (!q.zone) return html`<div class="muted"><span>${t("delivery")}</span><small>${t("deliveryAtCheckout")}</small></div>`;
+  return html`<div${q.deliveryFee ? "" : raw(' class="green"')}><span>${t("delivery")} <small class="muted">${L(q.zone, "name")}</small></span><b>${q.deliveryFee ? money(q.deliveryFee) : t("freeDelivery")}</b></div>`;
+}
+
 function totals(q, tax) {
   return html`<div class="totals">
     <div><span>${t("subtotal")}</span><b>${money(q.subtotal)}</b></div>
     ${q.discount ? html`<div class="green"><span>${t("discount")}${q.couponCode || q.referralCode ? ` (${q.couponCode || q.referralCode})` : ""}</span><b>−${money(q.discount)}</b></div>` : ""}
-    ${q.zone ? html`<div><span>${t("delivery")} <small class="muted">${L(q.zone, "name")}</small></span><b>${q.deliveryFee ? money(q.deliveryFee) : t("free")}</b></div>` : ""}
+    ${deliveryRow(q)}
     ${q.vat ? html`<div class="muted small"><span>${q.vatInclusive ? t("vatIncluded", { rate: tax?.rate ?? "" }) : t("vat")}</span><span>${money(q.vat)}</span></div>` : ""}
     <div class="grand"><span>${t("total")}</span><b>${money(q.total)}</b></div></div>`;
 }
@@ -172,7 +184,7 @@ async function renderCheckout(el, navigate, { resumed, registrySlug }) {
       $("#form-error", el).textContent = errMsg(e);
     }
   };
-  $("#apply-coupon", el).addEventListener("click", async () => { await requote(); if (quote?.discount) toast(t("couponApplied")); });
+  $("#apply-coupon", el).addEventListener("click", async () => { await requote(); if (quote?.couponCode || quote?.referralCode) toast(t("couponApplied")); });
 
   // ---- address cascade + quick search ----
   if (!shipToParent) {

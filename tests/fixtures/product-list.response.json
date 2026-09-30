@@ -20,10 +20,11 @@
       "stock": 42,
       "cert_count": 0,
       "discount_percent": 9,
-      "in_stock": true
+      "in_stock": true,
+      "delivery_mode": "zone"
     }
   ],
-  "total": 19,
+  "total": 25,
   "page": 1,
   "pages": 10
 }

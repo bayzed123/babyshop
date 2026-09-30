@@ -36,6 +36,11 @@ describe("discounts", () => {
     expect(evaluateCoupon(base, [{ category_id: 1, line_total: 2000 }])).toEqual({ ok: true, discount: 150, eligibleSubtotal: 2000 });
     expect(evaluateCoupon(base, [{ category_id: 1, line_total: 400 }])).toEqual({ ok: false, reason: "min_order" });
   });
+  it("free-delivery coupons take nothing off the items but still check the minimum", () => {
+    const fd: CouponRule = { ...base, type: "free_delivery", value: 0, max_discount: null };
+    expect(evaluateCoupon(fd, [{ category_id: 1, line_total: 900 }])).toEqual({ ok: true, discount: 0, eligibleSubtotal: 900, freeDelivery: true });
+    expect(evaluateCoupon(fd, [{ category_id: 1, line_total: 400 }])).toEqual({ ok: false, reason: "min_order" });
+  });
   it("respects expiry, usage limits and reserved phones", () => {
     expect(evaluateCoupon({ ...base, expires_at: "2020-01-01T00:00:00Z" }, [{ category_id: 1, line_total: 900 }]).ok).toBe(false);
     expect(evaluateCoupon({ ...base, usage_limit: 1, used_count: 1 }, [{ category_id: 1, line_total: 900 }])).toEqual({ ok: false, reason: "used_up" });

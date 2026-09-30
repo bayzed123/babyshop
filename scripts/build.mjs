@@ -139,9 +139,9 @@ for (const p of products) {
   const cat = catBySlug.get(p.cat);
   const code = cat.code;
   const ages = p.ages.length ? `,${p.ages.join(",")},` : "";
-  const img = `/img/products/${p.slug}.svg`;
+  const imgs = p.images ?? [`/img/products/${p.slug}.svg`];
   lines.push(
-    `INSERT INTO products (slug, name_en, name_bn, description_en, description_bn, category_id, brand, price, sale_price, discount_type, age_ranges, material_en, material_bn, care_en, care_bn, size_chart, is_consumable, reorder_days, is_gift, tags, images, status, is_featured) VALUES (${q(p.slug)}, ${q(p.en)}, ${q(p.bn)}, ${q(p.descEn)}, ${q(p.descBn)}, (SELECT id FROM categories WHERE slug = ${q(p.cat)}), ${q(p.brand)}, ${p.price}, ${q(p.sale ?? null)}, 'none', ${q(ages)}, ${q(p.materialEn)}, ${q(p.materialBn)}, ${q(p.careEn)}, ${q(p.careBn)}, ${q(p.sizeChart ?? null)}, ${p.consumable ? 1 : 0}, ${q(p.reorder ?? null)}, ${p.gift ? 1 : 0}, ${q([p.cat, p.brand].join(","))}, ${q(JSON.stringify([img]))}, 'active', ${p.featured ? 1 : 0});`,
+    `INSERT INTO products (slug, name_en, name_bn, description_en, description_bn, category_id, brand, price, sale_price, discount_type, age_ranges, material_en, material_bn, care_en, care_bn, size_chart, is_consumable, reorder_days, is_gift, tags, images, status, is_featured, delivery_mode) VALUES (${q(p.slug)}, ${q(p.en)}, ${q(p.bn)}, ${q(p.descEn)}, ${q(p.descBn)}, (SELECT id FROM categories WHERE slug = ${q(p.cat)}), ${q(p.brand)}, ${p.price}, ${q(p.sale ?? null)}, 'none', ${q(ages)}, ${q(p.materialEn)}, ${q(p.materialBn)}, ${q(p.careEn)}, ${q(p.careBn)}, ${q(p.sizeChart ?? null)}, ${p.consumable ? 1 : 0}, ${q(p.reorder ?? null)}, ${p.gift ? 1 : 0}, ${q([p.cat, p.brand].join(","))}, ${q(JSON.stringify(imgs))}, 'active', ${p.featured ? 1 : 0}, ${q(p.delivery ?? "zone")});`,
   );
   p.variants.forEach((v, i) => {
     const age = v.age ?? (p.ages.length === 1 ? p.ages[0] : null);
@@ -156,7 +156,7 @@ for (const p of products) {
 for (const [code, n] of Object.entries(seq)) lines.push(`INSERT INTO counters (name, value) VALUES (${q(`sku:${code}`)}, ${n});`);
 for (const b of banners) {
   lines.push(
-    `INSERT INTO banners (placement, title_en, title_bn, subtitle_en, subtitle_bn, cta_en, cta_bn, link_url, image_url, color, sort_order) VALUES (${q(b.placement)}, ${q(b.titleEn)}, ${q(b.titleBn)}, ${q(b.subEn)}, ${q(b.subBn)}, ${q(b.ctaEn)}, ${q(b.ctaBn)}, ${q(b.link)}, ${q(b.image ?? null)}, ${q(b.color)}, ${b.sort});`,
+    `INSERT INTO banners (placement, title_en, title_bn, subtitle_en, subtitle_bn, cta_en, cta_bn, link_url, image_url, color, sort_order, is_active) VALUES (${q(b.placement)}, ${q(b.titleEn)}, ${q(b.titleBn)}, ${q(b.subEn)}, ${q(b.subBn)}, ${q(b.ctaEn)}, ${q(b.ctaBn)}, ${q(b.link)}, ${q(b.image ?? null)}, ${q(b.color)}, ${b.sort}, ${b.active ?? 1});`,
   );
 }
 for (const c of coupons) lines.push(`INSERT INTO coupons (code, description, type, value, min_order, per_customer_limit) VALUES (${q(c.code)}, ${q(c.description)}, ${q(c.type)}, ${c.value}, ${c.min}, ${q(c.perCustomer ?? null)});`);

@@ -12,6 +12,7 @@ export default async function resourceView(view, { key, query }) {
   view.innerHTML = String(html`
     <div class="page-head"><h1>${tt(R.title)}</h1>${R.csv ? html`<button class="btn" id="csv">${icon("download")} ${t("exportCsv")}</button>` : ""}${!R.noCreate && can(writePerm) ? html`<button class="btn primary" id="add">${icon("plus")} ${t("add")}</button>` : ""}</div>
     ${R.intro ? html`<p class="muted">${tt(R.intro)}</p>` : ""}
+    <div id="top"></div>
     <div class="card">
       <div class="toolbar">
         <label class="sr-only" for="q">${t("searchPlaceholder")}</label><input class="input" id="q" type="search" placeholder="${t("searchPlaceholder")}" value="${state.q}">
@@ -55,6 +56,7 @@ export default async function resourceView(view, { key, query }) {
     });
     bindUploads(body);
     const form = $("#rf", panel);
+    R.onForm?.(form, item);
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const btn = $("button[type=submit]", panel);
@@ -102,6 +104,7 @@ export default async function resourceView(view, { key, query }) {
   });
   $("#q", view).addEventListener("input", debounce((e) => { state.q = e.target.value.trim(); state.page = 1; load(); }));
   $$("[data-filter]", view).forEach((s) => s.addEventListener("change", () => { state[s.dataset.filter] = s.value; state.page = 1; load(); }));
+  if (R.top) R.top($("#top", view));
   await load();
   if (query.get("id")) openForm(Number(query.get("id")));
   if (R.extra) R.extra().then((x) => ($("#extra", view).innerHTML = String(x))).catch(() => {});

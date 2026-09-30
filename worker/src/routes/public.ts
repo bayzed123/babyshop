@@ -21,7 +21,8 @@ export const otpAvailable = (env: AppEnv["Bindings"]) => smsConfigured(env) || e
 
 // ---------- Store configuration ----------
 app.get("/config", async (c) => {
-  const [store, payments, integrations, fraud, referral, tax, zones] = await Promise.all([
+  const now = new Date().toISOString();
+  const [store, payments, integrations, fraud, referral, tax, zones, popup] = await Promise.all([
     getSetting(c.env, "store"),
     getSetting(c.env, "payments"),
     getSetting(c.env, "integrations"),
@@ -29,6 +30,14 @@ app.get("/config", async (c) => {
     getSetting(c.env, "referral"),
     getSetting(c.env, "tax"),
     loadZones(c.env),
+    // The popup banner (if any): shown once to each visitor by the storefront.
+    c.env.DB.prepare(
+      `SELECT id, title_en, title_bn, subtitle_en, subtitle_bn, cta_en, cta_bn, link_url, image_url, color, updated_at FROM banners
+        WHERE placement = 'popup' AND is_active = 1 AND deleted_at IS NULL AND (starts_at IS NULL OR starts_at <= ?) AND (ends_at IS NULL OR ends_at >= ?)
+        ORDER BY sort_order, id DESC LIMIT 1`,
+    )
+      .bind(now, now)
+      .first(),
   ]);
   c.header("Cache-Control", "public, max-age=60");
   return c.json({
@@ -55,6 +64,7 @@ app.get("/config", async (c) => {
       Rocket: { enabled: payments.rocket.enabled, mode: "manual", number: payments.rocket.manualNumber, accountType: payments.rocket.accountType },
       Card: { enabled: payments.card.enabled && sslczConfigured(c.env) },
     },
+    popup: popup ?? null,
     zones: zones.map((z) => ({ code: z.code, name_en: z.name_en, name_bn: z.name_bn, fee: z.fee, free_shipping_min: z.free_shipping_min, eta_en: z.eta_en, eta_bn: z.eta_bn })),
   });
 });
@@ -92,7 +102,7 @@ const listQuery = z.object({
 });
 
 export const PRODUCT_CARD_COLUMNS = `p.id, p.slug, p.name_en, p.name_bn, p.brand, p.price, p.sale_price, p.images, p.age_ranges, p.rating_avg, p.rating_count,
-  p.sold_count, p.is_featured, p.is_gift, p.created_at, p.category_id,
+  p.sold_count, p.is_featured, p.is_gift, p.delivery_mode, p.created_at, p.category_id,
   (SELECT COALESCE(SUM(stock),0) FROM product_variants v WHERE v.product_id = p.id) AS stock,
   (SELECT COUNT(*) FROM certifications ce WHERE ce.product_id = p.id AND ce.is_active = 1 AND length(ce.document_url) > 0 AND (ce.valid_until IS NULL OR ce.valid_until >= date('now'))) AS cert_count`;
 
@@ -263,7 +273,7 @@ app.get("/home", async (c) => {
   const [banners, newArrivals, bestSellers, gifts, testimonials] = await Promise.all([
     c.env.DB.prepare(
       `SELECT id, placement, title_en, title_bn, subtitle_en, subtitle_bn, cta_en, cta_bn, link_url, image_url, color FROM banners
-        WHERE deleted_at IS NULL AND is_active = 1 AND (starts_at IS NULL OR starts_at <= ?) AND (ends_at IS NULL OR ends_at >= ?) ORDER BY placement, sort_order, id`,
+        WHERE placement <> 'popup' AND deleted_at IS NULL AND is_active = 1 AND (starts_at IS NULL OR starts_at <= ?) AND (ends_at IS NULL OR ends_at >= ?) ORDER BY placement, sort_order, id`,
     )
       .bind(now, now)
       .all(),

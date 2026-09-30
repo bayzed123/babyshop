@@ -65,6 +65,7 @@ export default async function product(el, { params, navigate }) {
             <div class="swatches" id="colors">${colors.map((c) => html`<button type="button" class="swatch" data-color="${c}">${c}</button>`)}</div></div>` : ""}
 
           <p class="stock-line" id="stock-line" aria-live="polite"></p>
+          <p class="delivery-line ${p.delivery_mode === "free" ? "free" : ""}">${icon("truck")} ${p.delivery_mode === "free" ? html`<b>${t("freeDelivery")}</b>` : t("deliveryAuto")}</p>
 
           <div class="buy-actions" id="buy-actions">
             <div class="qty" role="group" aria-label="${t("qty")}"><button type="button" data-q="-1" aria-label="-">${icon("minus")}</button><output id="qty">1</output><button type="button" data-q="1" aria-label="+">${icon("plus")}</button></div>

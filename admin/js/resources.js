@@ -1,11 +1,42 @@
 // Declarative definitions for the simpler admin modules. The generic view (views/resource.js) turns each one
 // into a searchable, filterable list (with CSV export) and create/edit slide-overs, delete→Trash and restore.
 import { t, tt, num, money, dt, lang } from "./i18n.js";
-import { html, pill, api, raw, riskBadge, toast, msg } from "./core.js";
+import { html, pill, api, raw, riskBadge, toast, msg, errMsg, session, uploadImage } from "./core.js";
 
 const L = (en, bn) => ({ en, bn });
 const yes = (v) => (v ? pill("active", t("yesNo_1")) : pill("inactive", t("yesNo_0")));
 const COLORS = [["yellow", L("Soft yellow", "হালকা হলুদ")], ["mint", L("Mint", "মিন্ট")], ["lavender", L("Lavender", "ল্যাভেন্ডার")], ["peach", L("Peach", "পিচ")], ["sky", L("Sky", "আকাশি")], ["pink", L("Pink", "গোলাপি")]];
+
+const PLACEMENTS = [
+  ["hero", L("Hero slider (top of home page)", "হিরো স্লাইডার (হোমপেজের উপরে)")],
+  ["offer", L("Offer banner (wide strip under the hero)", "অফার ব্যানার (হিরোর নিচে চওড়া স্ট্রিপ)")],
+  ["marketing", L("Marketing card (middle of home page)", "মার্কেটিং কার্ড (হোমপেজের মাঝে)")],
+  ["popup", L("Popup (once per visitor)", "পপআপ (প্রতি ভিজিটরকে একবার)")],
+];
+const PLACEMENT_SHORT = { hero: L("Hero slider", "হিরো স্লাইডার"), offer: L("Offer banner", "অফার ব্যানার"), marketing: L("Marketing card", "মার্কেটিং কার্ড"), popup: L("Popup", "পপআপ") };
+
+/** "Shop logo" card: shows the current logo, uploads a new one and saves it to Settings → Shop information. */
+async function logoCard(el) {
+  const Lx = (en, bn) => (lang() === "bn" ? bn : en);
+  let store;
+  try { store = (await api("/settings")).settings.store; } catch { return; }
+  const canEdit = session.perms.has("settings.manage");
+  el.innerHTML = String(html`<div class="card logo-card"><div class="logo-preview"><img src="${store.logo_url || "/img/logo.svg"}" alt="" id="logo-now"></div>
+    <div><h3 style="margin:0 0 4px">${Lx("Shop logo", "দোকানের লোগো")}</h3><p class="muted small" style="margin:0 0 10px">${Lx("Shows in the shop header, footer and admin. Square PNG/JPG/WebP works best.", "দোকানের হেডার, ফুটার ও অ্যাডমিনে দেখায়। বর্গাকার PNG/JPG/WebP ভালো হয়।")}</p>
+    ${canEdit ? html`<div class="chips"><label class="btn primary sm">${Lx("Upload new logo", "নতুন লোগো আপলোড")}<input type="file" accept="image/*" id="logo-up" hidden></label>${store.logo_url ? html`<button class="btn sm" type="button" id="logo-reset">${Lx("Use default logo", "ডিফল্ট লোগো")}</button>` : ""}</div>` : html`<p class="small muted">${Lx("Only a Super Admin can change the logo.", "শুধু সুপার অ্যাডমিন লোগো বদলাতে পারেন।")}</p>`}</div></div>`);
+  const save = async (url) => {
+    const r = await api("/settings/store", { method: "PUT", body: { ...store, logo_url: url } });
+    store.logo_url = url;
+    toast(msg(r));
+    logoCard(el);
+  };
+  el.querySelector("#logo-up")?.addEventListener("change", async (e) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    try { toast(t("uploading")); await save((await uploadImage(f, "branding")).url); } catch (err) { toast(errMsg(err), "err"); }
+  });
+  el.querySelector("#logo-reset")?.addEventListener("click", async () => { try { await save(""); } catch (err) { toast(errMsg(err), "err"); } });
+}
 
 let catOptions;
 export const categoryOptions = async () =>
@@ -58,12 +89,12 @@ export const RESOURCES = {
     title: L("Coupons & discounts", "কুপন ও ছাড়"),
     nameOf: (r) => r.code,
     filters: [
-      { name: "type", label: L("Type", "ধরন"), options: [["", L("All types", "সব ধরন")], ["percent", L("Percentage", "শতাংশ")], ["flat", L("Flat amount", "নির্দিষ্ট টাকা")]] },
+      { name: "type", label: L("Type", "ধরন"), options: [["", L("All types", "সব ধরন")], ["percent", L("Percentage", "শতাংশ")], ["flat", L("Flat amount", "নির্দিষ্ট টাকা")], ["free_delivery", L("Free delivery", "ফ্রি ডেলিভারি")]] },
       { name: "kind", label: L("Made by", "কে তৈরি করেছে"), options: [["", L("All", "সব")], ["standard", L("Staff", "স্টাফ")], ["recovery", L("Cart recovery", "কার্ট রিকভারি")], ["referral_reward", L("Referral reward", "রেফারেল রিওয়ার্ড")]] },
     ],
     columns: [
       { label: L("Code", "কোড"), render: (r) => html`<b style="letter-spacing:.06em">${r.code}</b><br><span class="muted small">${r.description ?? ""}</span>` },
-      { label: L("Discount", "ছাড়"), render: (r) => (r.type === "percent" ? `${num(r.value)}%` : money(r.value)) + (r.max_discount ? ` (≤ ${money(r.max_discount)})` : "") },
+      { label: L("Discount", "ছাড়"), render: (r) => (r.type === "free_delivery" ? `🚚 ${lang() === "bn" ? "ফ্রি ডেলিভারি" : "Free delivery"}` : (r.type === "percent" ? `${num(r.value)}%` : money(r.value)) + (r.max_discount ? ` (≤ ${money(r.max_discount)})` : "")) },
       { label: L("Min. order", "সর্বনিম্ন অর্ডার"), render: (r) => money(r.min_order) },
       { label: L("Used", "ব্যবহৃত"), render: (r) => `${num(r.used_count)}${r.usage_limit ? ` / ${num(r.usage_limit)}` : ""}` },
       { label: L("Expires", "মেয়াদ"), render: (r) => (r.expires_at ? dt(r.expires_at) : "—") },
@@ -72,8 +103,8 @@ export const RESOURCES = {
     fields: async () => [
       { name: "code", label: L("Coupon code", "কুপন কোড"), required: true, placeholder: "EID25", hint: L("Customers type this at checkout.", "গ্রাহক চেকআউটে এটি লিখবেন।") },
       { name: "description", label: L("Description (for staff)", "বিবরণ (স্টাফের জন্য)") },
-      { name: "type", label: L("Discount type", "ছাড়ের ধরন"), type: "select", options: [["percent", L("Percentage (%)", "শতাংশ (%)")], ["flat", L("Flat amount (৳)", "নির্দিষ্ট টাকা (৳)")]], required: true },
-      { name: "value", label: L("Discount value", "ছাড়ের পরিমাণ"), type: "number", required: true, min: 1 },
+      { name: "type", label: L("Discount type", "ছাড়ের ধরন"), type: "select", options: [["percent", L("Percentage (%)", "শতাংশ (%)")], ["flat", L("Flat amount (৳)", "নির্দিষ্ট টাকা (৳)")], ["free_delivery", L("Free delivery (no delivery charge)", "ফ্রি ডেলিভারি (ডেলিভারি চার্জ নেই)")]], required: true },
+      { name: "value", label: L("Discount value", "ছাড়ের পরিমাণ"), type: "number", required: true, min: 0 },
       { name: "min_order", label: L("Minimum order (৳)", "সর্বনিম্ন অর্ডার (৳)"), type: "money", default: 0 },
       { name: "max_discount", label: L("Maximum discount (৳, optional)", "সর্বোচ্চ ছাড় (৳, ঐচ্ছিক)"), type: "money" },
       { name: "starts_at", label: L("Starts", "শুরু"), type: "date" },
@@ -83,29 +114,41 @@ export const RESOURCES = {
       { name: "category_ids", label: L("Only for these categories (empty = whole shop)", "শুধু এই ক্যাটাগরিতে (খালি রাখলে পুরো দোকানে)"), type: "multiselect", options: await categoryOptions(), span: 2, hint: L("Hold Ctrl/⌘ (or long-press on phone) to select several.", "একাধিক বাছতে Ctrl/⌘ চেপে ধরুন (ফোনে লম্বা চাপ দিন)।") },
       { name: "is_active", label: L("Coupon is active", "কুপন চালু আছে"), type: "checkbox", default: 1, span: 2 },
     ],
+    /** "Free delivery" coupons have no amount — hide the amount fields for them. */
+    onForm: (form) => {
+      const sync = () => {
+        const free = form.type.value === "free_delivery";
+        for (const n of ["value", "max_discount"]) form[n].closest(".field").hidden = free;
+        if (free) form.value.value = "0";
+        else if (form.value.value === "0") form.value.value = "";
+      };
+      form.type.addEventListener("change", sync);
+      sync();
+    },
   },
 
   banners: {
     endpoint: "/banners",
     perm: "banners",
-    title: L("Homepage banners", "হোমপেজ ব্যানার"),
+    title: L("Banners & logo", "ব্যানার ও লোগো"),
+    intro: L("Hero slider: top of the home page. Offer banner: a wide strip under the hero. Marketing cards: a row of promo cards in the middle of the home page. Popup: shows once to each visitor (not on checkout). Set start/stop dates to run a campaign on its own.", "হিরো স্লাইডার: হোমপেজের উপরে। অফার ব্যানার: হিরোর নিচে চওড়া স্ট্রিপ। মার্কেটিং কার্ড: হোমপেজের মাঝে প্রোমো কার্ড। পপআপ: প্রতি ভিজিটরকে একবার দেখায় (চেকআউটে নয়)। শুরু/শেষের তারিখ দিলে ক্যাম্পেইন নিজে থেকেই চলবে।"),
     nameOf: (r) => r.title_en,
-    filters: [{ name: "placement", label: L("Placement", "অবস্থান"), options: [["", L("All", "সব")], ["hero", L("Hero slider", "হিরো স্লাইডার")], ["promo", L("Promo strip", "প্রোমো")]] }],
+    filters: [{ name: "placement", label: L("Placement", "অবস্থান"), options: [["", L("All", "সব")], ...PLACEMENTS] }],
     columns: [
       { label: L("Image", "ছবি"), render: (r) => (r.image_url ? html`<img class="thumb" src="${r.image_url}" alt="">` : "—") },
       { label: L("Title", "শিরোনাম"), render: (r) => html`<b>${lang() === "bn" ? r.title_bn : r.title_en}</b><br><span class="muted small">${r.link_url ?? ""}</span>` },
-      { label: L("Placement", "অবস্থান"), render: (r) => pill(r.placement) },
+      { label: L("Placement", "অবস্থান"), render: (r) => pill(r.placement, tt(PLACEMENT_SHORT[r.placement] ?? L(r.placement, r.placement))) },
       { label: L("Showing", "দেখাচ্ছে"), render: (r) => yes(r.is_active && (!r.ends_at || Date.parse(r.ends_at) > Date.now()) && (!r.starts_at || Date.parse(r.starts_at) <= Date.now())) },
     ],
     fields: async () => [
-      { name: "placement", label: L("Where to show", "কোথায় দেখাবে"), type: "select", options: [["hero", L("Hero slider (top of home page)", "হিরো স্লাইডার (হোমপেজের উপরে)")], ["promo", L("Promo strip", "প্রোমো")]], required: true, span: 2 },
+      { name: "placement", label: L("Where to show", "কোথায় দেখাবে"), type: "select", options: PLACEMENTS, required: true, span: 2 },
       { name: "title_en", label: L("Title (English)", "শিরোনাম (ইংরেজি)"), required: true },
       { name: "title_bn", label: L("Title (Bangla)", "শিরোনাম (বাংলা)"), required: true },
       { name: "subtitle_en", label: L("Subtitle (English)", "উপশিরোনাম (ইংরেজি)") },
       { name: "subtitle_bn", label: L("Subtitle (Bangla)", "উপশিরোনাম (বাংলা)") },
       { name: "cta_en", label: L("Button text (English)", "বাটনের লেখা (ইংরেজি)") },
       { name: "cta_bn", label: L("Button text (Bangla)", "বাটনের লেখা (বাংলা)") },
-      { name: "link_url", label: L("Button link", "বাটনের লিংক"), placeholder: "/shop?age=0-6m", span: 2 },
+      { name: "link_url", label: L("Button link", "বাটনের লিংক"), placeholder: "/shop/ride-on-toys", span: 2 },
       { name: "image_url", label: L("Image", "ছবি"), type: "image", span: 2 },
       { name: "color", label: L("Background colour", "পেছনের রং"), type: "select", options: COLORS },
       { name: "sort_order", label: L("Order (smaller shows first)", "ক্রম (ছোট সংখ্যা আগে)"), type: "number", default: 0 },
@@ -113,6 +156,8 @@ export const RESOURCES = {
       { name: "ends_at", label: L("Stop showing", "দেখানো বন্ধ"), type: "date" },
       { name: "is_active", label: L("Active", "চালু"), type: "checkbox", default: 1 },
     ],
+    /** Logo card above the banner list: preview, upload and save in one place. */
+    top: logoCard,
   },
 
   landing: {
