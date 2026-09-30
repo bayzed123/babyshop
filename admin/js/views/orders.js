@@ -119,7 +119,7 @@ export default async function orders(view, { id, query, refreshBell }) {
   $("#otrash", view)?.addEventListener("click", (e) => { state.trash = state.trash ? "" : "1"; e.currentTarget.setAttribute("aria-pressed", String(Boolean(state.trash))); load(); });
 
   await load();
-  if (id) openOrder(Number(id), () => { load(); refreshBell?.(); });
+  if (id && view.isConnected) openOrder(Number(id), () => { load(); refreshBell?.(); });
 }
 
 async function openOrder(id, onChange) {

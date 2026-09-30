@@ -290,7 +290,11 @@ async function route() {
   if (key === "login") { location.hash = "#/dashboard"; return; }
   const loader = VIEWS[key];
   $$("#nav a").forEach((a) => (a.dataset.key === key ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current")));
-  const view = $("#view");
+  // A fresh container per navigation: a slow view that finishes after the user has moved on writes into a
+  // detached element instead of drawing over the page they are now looking at.
+  const view = document.createElement("div");
+  view.id = "view";
+  $("#view").replaceWith(view);
   const title = t(key);
   $("#page-title").textContent = title;
   document.title = `${title} — ${brand.name.en} Admin`;
@@ -303,6 +307,7 @@ async function route() {
     console.error(e);
     view.innerHTML = String(html`<div class="card"><p class="error-box">${errMsg(e)}</p></div>`);
   }
+  if (!view.isConnected) return;
   $("#work")?.scrollTo?.(0, 0);
   window.scrollTo(0, 0);
 }

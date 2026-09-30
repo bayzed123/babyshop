@@ -326,6 +326,13 @@ export const productSchema = z
   }));
 export type ProductInput = z.infer<typeof productSchema>;
 
+/** Optional pastel tile colour; the form's blank "—" choice arrives as "" and means "no colour". */
+const tileColor = z
+  .enum(["yellow", "mint", "lavender", "peach", "sky", "pink"])
+  .optional()
+  .nullable()
+  .or(z.literal("").transform(() => null));
+
 export const categorySchema = z.object({
   slug,
   code: z
@@ -339,7 +346,7 @@ export const categorySchema = z.object({
   description_en: optText(1000),
   description_bn: optText(1000),
   image_url: optText(500),
-  color: z.enum(["yellow", "mint", "lavender", "peach", "sky", "pink"]).optional().nullable(),
+  color: tileColor,
   sort_order: z.coerce.number().int().min(0).default(0),
   is_active: flag.default(1),
 });
@@ -389,7 +396,7 @@ export const bannerSchema = z.object({
   cta_bn: optText(40),
   link_url: optText(500),
   image_url: optText(500),
-  color: z.enum(["yellow", "mint", "lavender", "peach", "sky", "pink"]).optional().nullable(),
+  color: tileColor,
   starts_at: isoDate,
   ends_at: isoDate,
   sort_order: z.coerce.number().int().min(0).default(0),
@@ -409,7 +416,7 @@ export const landingSchema = z.object({
   coupon_code: optText(30),
   cta_en: optText(40),
   cta_bn: optText(40),
-  color: z.enum(["yellow", "mint", "lavender", "peach", "sky", "pink"]).optional().nullable(),
+  color: tileColor,
   is_active: flag.default(1),
 });
 

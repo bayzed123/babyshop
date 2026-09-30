@@ -97,7 +97,7 @@ export default async function products(view, { id, query }) {
   });
 
   await load();
-  if (id) editor(id === "new" ? null : Number(id), cats, load);
+  if (id && view.isConnected) editor(id === "new" ? null : Number(id), cats, load);
 }
 
 const blankVariant = () => ({ sku: "", size: "Standard", color: "", age_range: "", stock: 0, price_override: null, low_stock_threshold: 3 });

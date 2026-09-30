@@ -52,5 +52,5 @@ export default async function registries(view, { id }) {
   $("#rs", view).onchange = (e) => { state.status = e.target.value; state.page = 1; load(); };
   $("#csv", view).onclick = async () => { try { await exportCsv(`/registries?${qs()}`, "registries"); } catch (err) { toast(errMsg(err), "err"); } };
   await load();
-  if (id) open(Number(id));
+  if (id && view.isConnected) open(Number(id));
 }

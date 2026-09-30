@@ -171,6 +171,45 @@ describe("categories, settings and housekeeping", () => {
     expect(del.res.status).toBe(409); // still has products
   });
 
+  it("switches a category Active ⇄ Inactive in one tap, with its sub-categories", async () => {
+    const slugs = async () => ((await call("/api/categories")).data.categories as { slug: string }[]).map((c) => c.slug);
+    expect(await slugs()).toEqual(expect.arrayContaining(["toys-learning", "soft-toys", "learning-toys"]));
+    expect((await call("/api/products?category=toys-learning")).data.total).toBeGreaterThan(0);
+
+    expect((await call("/api/admin/categories/6/status", { method: "PUT", cookie: processor, json: { is_active: false } })).res.status).toBe(403);
+    const off = await call("/api/admin/categories/6/status", { method: "PUT", cookie: admin, json: { is_active: false } });
+    expect(off.res.status).toBe(200);
+    expect(off.data.ids.length).toBeGreaterThanOrEqual(3); // parent + its sub-categories
+    expect(off.data.en).toMatch(/inactive/);
+    const after = await slugs();
+    expect(after).not.toContain("toys-learning");
+    expect(after).not.toContain("soft-toys");
+    expect((await call("/api/products?category=toys-learning")).data.total).toBe(0);
+    // Products themselves stay on sale.
+    expect((await call("/api/products/plush-teddy-bear")).res.status).toBe(200);
+    const listed = await call("/api/admin/categories?is_active=0", { cookie: admin });
+    expect(listed.data.items.map((c: { slug: string }) => c.slug)).toEqual(expect.arrayContaining(["toys-learning", "soft-toys"]));
+
+    const on = await call("/api/admin/categories/6/status", { method: "PUT", cookie: admin, json: { is_active: true } });
+    expect(on.res.status).toBe(200);
+    expect(await slugs()).toEqual(expect.arrayContaining(["toys-learning", "soft-toys", "learning-toys"]));
+    const audit = await env.DB.prepare("SELECT action FROM audit_log WHERE entity = 'category' AND entity_id = '6' ORDER BY id").all<{ action: string }>();
+    expect(audit.results.map((r) => r.action)).toEqual(expect.arrayContaining(["deactivate", "activate"]));
+  });
+
+  it("creates a new category as Inactive from the form (blank optional fields) and turns it on", async () => {
+    // Exactly what the admin form sends when the optional fields, including "Tile colour", are left blank.
+    const form = { name_en: "Baby Carriers", name_bn: "বেবি ক্যারিয়ার", slug: "baby-carriers", code: "BAB", parent_id: null, description_en: "", description_bn: "", image_url: "", color: "", sort_order: 0, is_active: 0 };
+    const created = await call("/api/admin/categories", { method: "POST", cookie: admin, json: form });
+    expect(created.res.status).toBe(201);
+    const row = await env.DB.prepare("SELECT color, is_active FROM categories WHERE id = ?").bind(created.data.id).first<{ color: string | null; is_active: number }>();
+    expect(row).toEqual({ color: null, is_active: 0 });
+    const slugs = async () => ((await call("/api/categories")).data.categories as { slug: string }[]).map((c) => c.slug);
+    expect(await slugs()).not.toContain("baby-carriers");
+    await call(`/api/admin/categories/${created.data.id}/status`, { method: "PUT", cookie: admin, json: { is_active: true } });
+    expect(await slugs()).toContain("baby-carriers");
+  });
+
   it("refuses API secrets in database-backed settings and validates rule settings", async () => {
     const bad = await call("/api/admin/settings/integrations", { method: "PUT", cookie: admin, json: { metaPixelId: "1", apiToken: "x" } });
     expect(bad.res.status).toBe(400);

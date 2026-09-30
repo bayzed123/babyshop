@@ -8,7 +8,7 @@ import type { AppEnv } from "../../env";
 import { body, E, intParam, likeText, SQL_NOW, validate } from "../../lib/http";
 import { stockAdjustSchema } from "../../lib/schemas";
 import { perm } from "../../middleware";
-import { audit, getSetting, putSetting } from "../../lib/store";
+import { audit, expandCategoryIds, getSetting, putSetting } from "../../lib/store";
 import { PERMISSIONS, ROLE_LABELS, ROLE_MATRIX } from "../../lib/rbac";
 import { bkashConfigured, nagadConfigured, sslczConfigured } from "../../lib/payments";
 import { pathaoConfigured, steadfastConfigured } from "../../lib/couriers";
@@ -120,6 +120,39 @@ app.put("/categories/reorder", perm("categories.write"), async (c) => {
   );
   await audit(c, "reorder", "category", null, { count: b.items.length });
   return c.json({ ok: true, en: "Order saved.", bn: "ক্রম সংরক্ষণ করা হয়েছে।" });
+});
+
+/**
+ * One-tap Active / Inactive for a category. Turning a category off also turns off its sub-categories
+ * (unless include_sub is false), so a hidden parent never leaves orphaned children in the menu.
+ * Inactive categories disappear from the shop menu, home tiles, category page and sitemap; their
+ * products stay on sale (set a product to Draft to hide it).
+ */
+app.put("/categories/:id{[0-9]+}/status", perm("categories.write"), async (c) => {
+  const id = Number(c.req.param("id"));
+  const b = await body(c, z.object({ is_active: z.boolean(), include_sub: z.boolean().default(true) }));
+  const cat = await c.env.DB.prepare("SELECT id, parent_id, name_en, name_bn FROM categories WHERE id = ? AND deleted_at IS NULL").bind(id).first<{ id: number; parent_id: number | null; name_en: string; name_bn: string }>();
+  if (!cat) throw E.notFound("Category");
+  const ids = b.include_sub ? await expandCategoryIds(c.env, [id]) : [id];
+  await c.env.DB.prepare(`UPDATE categories SET is_active = ?, updated_at = ${SQL_NOW} WHERE id IN (${ids.map(() => "?").join(",")}) AND deleted_at IS NULL`)
+    .bind(b.is_active ? 1 : 0, ...ids)
+    .run();
+  await audit(c, b.is_active ? "activate" : "deactivate", "category", id, { ids });
+  const subs = ids.length - 1;
+  let en = b.is_active ? `"${cat.name_en}" is active and shows in the shop.` : `"${cat.name_en}" is inactive and hidden from the shop.`;
+  let bn = b.is_active ? `"${cat.name_bn}" চালু — দোকানে দেখাবে।` : `"${cat.name_bn}" বন্ধ — দোকানে দেখাবে না।`;
+  if (subs > 0) {
+    en += ` ${subs} sub-categor${subs === 1 ? "y was" : "ies were"} updated too.`;
+    bn += ` ${subs}টি সাব-ক্যাটাগরিও আপডেট হয়েছে।`;
+  }
+  if (b.is_active && cat.parent_id) {
+    const parent = await c.env.DB.prepare("SELECT is_active, name_en, name_bn FROM categories WHERE id = ?").bind(cat.parent_id).first<{ is_active: number; name_en: string; name_bn: string }>();
+    if (parent && !parent.is_active) {
+      en += ` Its parent "${parent.name_en}" is inactive, so it stays hidden until you turn that on.`;
+      bn += ` এর মূল ক্যাটাগরি "${parent.name_bn}" বন্ধ আছে, তাই সেটি চালু না করা পর্যন্ত এটি দেখাবে না।`;
+    }
+  }
+  return c.json({ ok: true, ids, en, bn });
 });
 
 // ---------- Settings ----------
