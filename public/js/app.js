@@ -143,12 +143,44 @@ export function openCartDrawer() {
   overlay("drawer", { title: t("yourCart"), body, footer });
 }
 
+/**
+ * Popup banner (Admin → Banners & logo → Popup): shown once per visitor per version of the banner, never on
+ * checkout, cart, order or campaign pages, and never on top of another dialog.
+ */
+function maybeShowPopup(p) {
+  if (!p || /^\/(checkout|cart|order|lp|track|account)/.test(location.pathname) || document.querySelector(".popup-scrim")) return;
+  const key = `zsb_popup_${p.id}_${p.updated_at}`;
+  try { if (localStorage.getItem(key)) return; } catch { return; }
+  const scrim = document.createElement("div");
+  scrim.className = "popup-scrim";
+  scrim.innerHTML = String(html`<div class="popup-banner ${p.color ?? "pink"}" role="dialog" aria-modal="true" aria-labelledby="popup-title">
+      <button class="icon-btn popup-close" type="button" data-close aria-label="${t("popupClose")}">${icon("close")}</button>
+      ${p.image_url ? html`<img src="${p.image_url}" alt="" width="360" height="360">` : ""}
+      <h2 id="popup-title">${L(p, "title")}</h2>
+      ${p.subtitle_en ? html`<p>${L(p, "subtitle")}</p>` : ""}
+      ${p.link_url ? html`<a class="btn primary lg" href="${p.link_url}" data-close>${L(p, "cta") || t("shop")}</a>` : ""}
+    </div>`);
+  const prev = document.activeElement;
+  const close = () => {
+    try { localStorage.setItem(key, "1"); } catch { /* private mode: show again next time */ }
+    scrim.remove();
+    document.removeEventListener("keydown", onKey);
+    prev?.focus?.();
+  };
+  const onKey = (e) => { if (e.key === "Escape") close(); };
+  scrim.addEventListener("click", (e) => { if (e.target === scrim || e.target.closest("[data-close]")) close(); });
+  document.addEventListener("keydown", onKey);
+  document.body.append(scrim);
+  scrim.querySelector(".popup-close").focus();
+}
+
 let catsCache;
 async function chrome() {
   try {
     const [cfg, cats] = await Promise.all([config(), (catsCache ??= api("/categories"))]);
     buildNav(cats.categories);
     buildFooter(cfg);
+    setTimeout(() => maybeShowPopup(cfg.popup), 1500);
   } catch (e) {
     console.warn("chrome failed", e);
   }

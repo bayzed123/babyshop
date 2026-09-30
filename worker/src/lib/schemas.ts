@@ -282,6 +282,8 @@ export const productSchema = z
     images: z.array(z.string().trim().max(500)).max(12).default([]),
     status: z.enum(["draft", "active", "archived"]).default("draft"),
     is_featured: flag.default(0),
+    /** "zone" = delivery charge auto-calculated from the customer's area; "free" = ships free. */
+    delivery_mode: z.enum(["zone", "free"]).default("zone"),
     meta_title: optText(160),
     meta_description: optText(320),
     variants: z.array(variantSchema).min(1).max(200),
@@ -369,8 +371,8 @@ export const couponSchema = z
       .regex(/^[A-Za-z0-9_-]+$/, { message: "Letters, numbers, - and _ only / শুধু অক্ষর, সংখ্যা, - ও _" })
       .transform((v) => v.toUpperCase()),
     description: optText(200),
-    type: z.enum(["percent", "flat"]),
-    value: z.coerce.number().int().min(1).max(1_000_000),
+    type: z.enum(["percent", "flat", "free_delivery"]),
+    value: z.coerce.number().int().min(0).max(1_000_000).default(0),
     min_order: money.default(0),
     max_discount: money.optional().nullable(),
     starts_at: isoDate,
@@ -380,14 +382,16 @@ export const couponSchema = z
     category_ids: idList,
     is_active: flag.default(1),
   })
+  .transform((c) => (c.type === "free_delivery" ? { ...c, value: 0, max_discount: null } : c))
   .superRefine((c, ctx) => {
+    if (c.type !== "free_delivery" && c.value < 1) ctx.addIssue({ code: "custom", path: ["value"], message: "Enter the discount amount / ছাড়ের পরিমাণ লিখুন" });
     if (c.type === "percent" && c.value > 90) ctx.addIssue({ code: "custom", path: ["value"], message: "Percentage cannot exceed 90% / শতাংশ ৯০% এর বেশি হতে পারবে না" });
     if (c.starts_at && c.expires_at && Date.parse(c.expires_at) <= Date.parse(c.starts_at))
       ctx.addIssue({ code: "custom", path: ["expires_at"], message: "Expiry must be after the start date / মেয়াদ শেষের তারিখ শুরুর পরে হতে হবে" });
   });
 
 export const bannerSchema = z.object({
-  placement: z.enum(["hero", "promo"]),
+  placement: z.enum(["hero", "offer", "marketing", "popup"]),
   title_en: reqText(120),
   title_bn: reqText(120),
   subtitle_en: optText(240),

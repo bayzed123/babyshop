@@ -44,7 +44,7 @@ app.get("/", perm("products.read"), async (c) => {
   const sorts: Record<string, string> = { newest: "p.created_at DESC", name: "p.name_en ASC", price_asc: "p.price ASC", price_desc: "p.price DESC", sold: "p.sold_count DESC", stock: "stock ASC" };
   const sort = sorts[q.sort ?? "newest"] ?? sorts.newest;
   const w = where.join(" AND ");
-  const cols = `p.id, p.slug, p.name_en, p.name_bn, p.brand, p.price, p.sale_price, p.discount_type, p.discount_value, p.age_ranges, p.status, p.images, p.is_featured, p.is_gift, p.sold_count, p.rating_avg, p.created_at, p.updated_at,
+  const cols = `p.id, p.slug, p.name_en, p.name_bn, p.brand, p.price, p.sale_price, p.discount_type, p.discount_value, p.age_ranges, p.status, p.images, p.is_featured, p.is_gift, p.delivery_mode, p.sold_count, p.rating_avg, p.created_at, p.updated_at,
       c.name_en AS category_name, c.name_bn AS category_name_bn,
       (SELECT COALESCE(SUM(stock),0) FROM product_variants v WHERE v.product_id = p.id) AS stock,
       (SELECT COUNT(*) FROM product_variants v WHERE v.product_id = p.id) AS variant_count,
@@ -93,7 +93,7 @@ app.get("/sku-preview", perm("products.write"), async (c) => {
 const PRODUCT_COLS = [
   "slug", "name_en", "name_bn", "description_en", "description_bn", "category_id", "brand", "price", "sale_price", "discount_type", "discount_value",
   "age_ranges", "material_en", "material_bn", "care_en", "care_bn", "size_chart", "is_consumable", "reorder_days", "is_gift", "tags", "images",
-  "status", "is_featured", "meta_title", "meta_description",
+  "status", "is_featured", "meta_title", "meta_description", "delivery_mode",
 ] as const;
 
 function productParams(p: ProductInput): unknown[] {
@@ -101,7 +101,7 @@ function productParams(p: ProductInput): unknown[] {
   return [
     p.slug, p.name_en, p.name_bn, p.description_en, p.description_bn, p.category_id, p.brand, p.price, p.sale_price ?? null, p.discount_type, p.discount_value,
     ages, p.material_en, p.material_bn, p.care_en, p.care_bn, p.size_chart ?? null, p.is_consumable, p.reorder_days, p.is_gift, p.tags, JSON.stringify(p.images),
-    p.status, p.is_featured, p.meta_title, p.meta_description,
+    p.status, p.is_featured, p.meta_title, p.meta_description, p.delivery_mode,
   ];
 }
 
@@ -322,13 +322,13 @@ app.post("/:id{[0-9]+}/notify-waiting", perm("products.write"), async (c) => {
 // ---------- CSV export / import ----------
 const CSV_COLUMNS = [
   "slug", "name_en", "name_bn", "category_code", "brand", "price", "sale_price", "age_ranges", "status", "is_consumable", "reorder_days", "is_gift", "tags",
-  "material_en", "material_bn", "description_en", "description_bn", "images", "variant_sku", "size", "color", "variant_age_range", "stock", "price_override",
+  "material_en", "material_bn", "description_en", "description_bn", "images", "delivery_mode", "variant_sku", "size", "color", "variant_age_range", "stock", "price_override",
 ];
 
 async function exportCsv(c: Context<AppEnv>, where: string, args: unknown[]) {
   const { results } = await c.env.DB.prepare(
     `SELECT p.slug, p.name_en, p.name_bn, c.code AS category_code, p.brand, p.price, p.sale_price, p.age_ranges, p.status, p.is_consumable, p.reorder_days, p.is_gift, p.tags,
-            p.material_en, p.material_bn, p.description_en, p.description_bn, p.images, v.sku AS variant_sku, v.size, v.color, v.age_range AS variant_age_range, v.stock, v.price_override
+            p.material_en, p.material_bn, p.description_en, p.description_bn, p.images, p.delivery_mode, v.sku AS variant_sku, v.size, v.color, v.age_range AS variant_age_range, v.stock, v.price_override
        FROM products p LEFT JOIN categories c ON c.id = p.category_id JOIN product_variants v ON v.product_id = p.id WHERE ${where} ORDER BY p.id, v.sort_order, v.id LIMIT 20000`,
   )
     .bind(...args)
@@ -387,6 +387,7 @@ app.post("/import", perm("products.write"), async (c) => {
         material_en: f.material_en,
         material_bn: f.material_bn,
         images: (f.images ?? "").split("|").map((s) => s.trim()).filter(Boolean),
+        delivery_mode: (f.delivery_mode ?? "").trim().toLowerCase() === "free" ? "free" : "zone",
         certifications: oldCerts,
         variants: list.map((r) => ({
           id: oldVariants.find((v) => v.sku === (r.variant_sku ?? "").toUpperCase())?.id,

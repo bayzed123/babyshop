@@ -36,10 +36,10 @@ This document describes the system as built in this repository, section by secti
 
 | Page | Route | Notes |
 |---|---|---|
-| Home | `/` | hero banners, category tiles, shop by age, new arrivals, best sellers (real `sold_count` only), gifting guide, approved reviews, newsletter |
+| Home | `/` | hero banners, offer banner strip, category tiles, shop by age, marketing cards, new arrivals, best sellers (real `sold_count` only), gifting guide, approved reviews, newsletter |
 | Shop / category | `/shop`, `/shop/:category`, `/search?q=` | filters: category, **age range**, price, brand, in stock, on sale; sort: newest, price, popularity, rating |
 | Product | `/product/:slug` | gallery, age tags, size chart (clothing/shoes), material & care, documented certification badges, stock status ("only X left" only when real stock ≤ threshold), Add to cart / Buy now, reviews, related & upsell, back-in-stock "Notify me" |
-| Cart / Checkout | `/cart`, `/checkout` | guest checkout; Division → District → Upazila/Thana; live delivery fee; COD / bKash / Nagad / Rocket / card; SMS OTP; coupon or referral code; gift message; reorder-reminder opt-in |
+| Cart / Checkout | `/cart`, `/checkout` | guest checkout; Division → District → Upazila/Thana; delivery charge auto-calculated from the area (or "Free delivery" for free-delivery products / a free-delivery coupon — no charge is shown); COD / bKash / Nagad / Rocket / card; SMS OTP; coupon or referral code; gift message; reorder-reminder opt-in |
 | Order | `/order/:orderNo`, `/track` | status timeline, courier tracking, invoice PDF once confirmed |
 | Account | `/account/(orders\|wishlist\|addresses\|registries\|returns\|referral\|reminders)` | order history & tracking, wishlist, saved addresses, gift registries, return requests, referral code, reminders |
 | Gift registry | `/registry/:slug` | shareable list; guests buy items shipped to the parent |
@@ -76,11 +76,11 @@ On phones the sidebar and rail become drawers; tables become stacked cards.
 | Categories | nested tree, drag to reorder / nest, SKU code per category; **New category** button; All / Active / Inactive tabs; one-tap Active ⇄ Inactive switch per row (sub-categories follow their parent, with a confirmation) — inactive categories are hidden from the shop menu, home tiles, category page and sitemap while their products stay on sale; CSV |
 | Inventory | per-SKU stock, ±1/+5 and bulk set, reason, stock history, waiting list, CSV |
 | Customers | order counts, 🟢/🟡/🔴 badge with reason, block/unblock, CSV |
-| Coupons | flat/percent, minimum order, expiry, usage limits, per-customer limit; recovery & referral coupons listed |
+| Coupons | flat/percent/free delivery, minimum order, expiry, usage limits, per-customer limit; recovery & referral coupons listed |
 | Gift registries | progress, items, gift orders, share link, close/reopen |
 | Reviews | approve / reject / reply |
 | Campaign pages | landing pages for ads |
-| Banners | hero and promo banners with schedules |
+| Banners & logo | hero slider, offer banner, marketing cards and a once-per-visitor popup, each with image, colour, link and start/stop schedule; shop logo upload |
 | Referrals | codes, uses, rewards, delivered revenue; switch off |
 | Reports | sales by day/month/category/product/payment/zone/**ad campaign**, best sellers by SKU, delivery outcomes, best customers, checkout funnel — all CSV |
 | Staff & roles | Super Admin, Manager, Order Processor, Read-only Viewer; phone for SMS sign-in; reset 2FA |
@@ -141,7 +141,7 @@ flowchart LR
 
 ## 5. Data Models
 
-One migration (`worker/migrations/0001_init.sql`) creates 33 tables. Money is stored as whole Taka (`INTEGER`),
+`worker/migrations/0001_init.sql` creates 33 tables; `0002_delivery_and_banners.sql` adds `products.delivery_mode`, the `free_delivery` coupon type and the offer/marketing/popup banner placements; `0003_ride_on_toys.sql` adds the Ride-on Toys category, six products and their banners to an already-seeded database (a no-op on a fresh one, where the seed adds them). The tables below show the current schema. Money is stored as whole Taka (`INTEGER`),
 timestamps as ISO-8601 UTC text, booleans as `0/1`. "Day" boundaries in reports and invoice numbers use Bangladesh time (UTC+6).
 
 ### SKU & invoice numbering (hard requirement)
@@ -340,6 +340,7 @@ index `idx_categories_parent` (parent_id, sort_order)
 | `images` | TEXT | NOT NULL DEFAULT '[]' |  |
 | `status` | TEXT | NOT NULL DEFAULT 'draft' CHECK (status IN ('draft','active','archived')) |  |
 | `is_featured` | INTEGER | NOT NULL DEFAULT 0 |  |
+| `delivery_mode` | TEXT | NOT NULL DEFAULT 'zone' CHECK (delivery_mode IN ('zone','free')) | 'zone' = charge from the customer's delivery zone; 'free' = ships free (a cart of only free-delivery items pays no delivery charge) |
 | `sold_count` | INTEGER | NOT NULL DEFAULT 0 |  |
 | `rating_avg` | REAL | NOT NULL DEFAULT 0 |  |
 | `rating_count` | INTEGER | NOT NULL DEFAULT 0 |  |
@@ -394,7 +395,7 @@ unique index `uq_cert_product_type` (product_id, type)
 | Column | Type | Constraints / default | Notes |
 |---|---|---|---|
 | `id` | INTEGER | PRIMARY KEY AUTOINCREMENT |  |
-| `placement` | TEXT | NOT NULL DEFAULT 'hero' CHECK (placement IN ('hero','promo')) |  |
+| `placement` | TEXT | NOT NULL DEFAULT 'hero' CHECK (placement IN ('hero','offer','marketing','popup')) | hero slider · offer strip under the hero · marketing cards · popup (served in `/api/config`, shown once per visitor, never on cart/checkout) |
 | `title_en` | TEXT | NOT NULL |  |
 | `title_bn` | TEXT | NOT NULL |  |
 | `subtitle_en` | TEXT |  |  |
@@ -499,8 +500,8 @@ index `idx_addresses_customer` (customer_id)
 | `code` | TEXT | NOT NULL UNIQUE COLLATE NOCASE |  |
 | `description` | TEXT |  |  |
 | `kind` | TEXT | NOT NULL DEFAULT 'standard' CHECK (kind IN ('standard','recovery','referral_reward')) |  |
-| `type` | TEXT | NOT NULL CHECK (type IN ('percent','flat')) |  |
-| `value` | INTEGER | NOT NULL CHECK (value > 0) |  |
+| `type` | TEXT | NOT NULL CHECK (type IN ('percent','flat','free_delivery')) | free_delivery removes the delivery charge |
+| `value` | INTEGER | NOT NULL DEFAULT 0 CHECK (value >= 0 AND (type = 'free_delivery' OR value > 0)) |  |
 | `min_order` | INTEGER | NOT NULL DEFAULT 0 |  |
 | `max_discount` | INTEGER |  |  |
 | `starts_at` | TEXT |  |  |
@@ -937,7 +938,7 @@ Every integration is optional: without its secret the feature degrades gracefull
 | Web push | VAPID (no-payload push) | order-status and promo pushes for installed PWA | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` |
 | AI (optional) | Workers AI | gift-finder refinement, bilingual description drafts (never allowed to claim certifications) | `[ai]` binding in `wrangler.toml` |
 
-**Delivery fee:** `delivery_zones` rules are matched most-specific-first — upazila → district → division → default — with a free-delivery threshold and ETA per zone. The checkout shows the fee live as the address is chosen (`GET /api/delivery-fee`), and the server recomputes it at order time.
+**Delivery fee:** `delivery_zones` rules are matched most-specific-first — upazila → district → division → default — with a free-delivery threshold and ETA per zone. The checkout shows the fee live as the address is chosen (`GET /api/delivery-fee`), and the server recomputes it at order time. No charge applies — and none is shown — when every item in the cart is a free-delivery product (`products.delivery_mode = 'free'`, set per product in Admin → Products) or a free-delivery coupon is applied; the quote's `freeDelivery` field says why (`products`, `coupon` or `threshold`).
 
 ## 7. Security & Compliance
 
@@ -995,12 +996,12 @@ babyshop/
 │   │   ├── jobs.ts              cron jobs (recovery, reminders, review requests, purge, backup)
 │   │   ├── middleware.ts        security headers, CSRF, language, sessions, RBAC
 │   │   └── index.ts
-│   ├── migrations/0001_init.sql
+│   ├── migrations/0001_init.sql, 0002_delivery_and_banners.sql, 0003_ride_on_toys.sql
 │   ├── .dev.vars.example
 │   └── wrangler.toml
 ├── public/                      storefront (index.html, css/, js/ + views/, sw.js, img/, data/bd-geo.json)
 ├── admin/                       admin SPA (index.html, css/, js/ + views/)
-├── scripts/                     build, seed data, generated art, geo data, create-admin, provision, sync-secrets
+├── scripts/                     build, seed data, generated art, ride-on toy renders, geo data, create-admin, provision, sync-secrets
 ├── tests/                       unit/, integration/, e2e/, fixtures/
 ├── .github/workflows/ci-deploy.yml
 └── docs/                        SPECIFICATION.md, SETUP.md, SECURITY.md, BUILD-PROMPT.md

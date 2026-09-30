@@ -58,7 +58,7 @@ function ogCover() {
 }
 
 mkdirSync("public/img/products", { recursive: true });
-for (const p of products) writeFileSync(`public/img/products/${p.slug}.svg`, productSvg(p.art, p.color));
+for (const p of products) if (!p.images) writeFileSync(`public/img/products/${p.slug}.svg`, productSvg(p.art, p.color)); // ride-ons use rendered photos
 writeFileSync("public/img/logo.svg", logoSvg());
 writeFileSync("public/img/og-cover.svg", ogCover());
 writeFileSync("admin/icon.svg", logoSvg());

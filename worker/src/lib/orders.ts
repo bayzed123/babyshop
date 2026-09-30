@@ -133,6 +133,7 @@ interface VariantJoin {
   status: string;
   is_consumable: number;
   reorder_days: number | null;
+  delivery_mode: "zone" | "free";
 }
 
 export interface QuoteLine {
@@ -151,7 +152,11 @@ export interface QuoteLine {
   lineTotal: number;
   isConsumable: boolean;
   reorderDays: number | null;
+  freeDelivery: boolean;
 }
+
+/** Why the delivery charge is zero, so the shop can say "Free delivery" instead of showing a charge. */
+export type FreeDeliveryReason = "products" | "coupon" | "threshold";
 
 export interface Quote {
   lines: QuoteLine[];
@@ -162,6 +167,8 @@ export interface Quote {
   referralCode: string | null;
   zone: { code: string; name_en: string; name_bn: string; eta_en?: string | null; eta_bn?: string | null } | null;
   deliveryFee: number;
+  /** Set when delivery is free (all items ship free, a free-delivery coupon, or the area's free-over amount). */
+  freeDelivery: FreeDeliveryReason | null;
   vat: number;
   vatInclusive: boolean;
   total: number;
@@ -180,7 +187,7 @@ export async function quote(env: Env, items: { variantId: number; quantity: numb
   const ids = [...merged.keys()];
   const { results } = await env.DB.prepare(
     `SELECT v.id AS variant_id, v.product_id, v.sku, v.size, v.color, v.age_range, v.stock, v.price_override,
-            p.price, p.sale_price, p.name_en, p.name_bn, p.images, p.category_id, p.status, p.is_consumable, p.reorder_days
+            p.price, p.sale_price, p.name_en, p.name_bn, p.images, p.category_id, p.status, p.is_consumable, p.reorder_days, p.delivery_mode
        FROM product_variants v JOIN products p ON p.id = v.product_id
       WHERE v.id IN (${ids.map(() => "?").join(",")}) AND p.deleted_at IS NULL`,
   )
@@ -220,11 +227,13 @@ export async function quote(env: Env, items: { variantId: number; quantity: numb
       lineTotal: unitPrice * quantity,
       isConsumable: Boolean(v.is_consumable),
       reorderDays: v.reorder_days,
+      freeDelivery: v.delivery_mode === "free",
     });
   }
   const subtotal = lines.reduce((s, l) => s + l.lineTotal, 0);
 
   let discount = 0;
+  let couponFreeDelivery = false;
   let couponId: number | null = null;
   let appliedCode: string | null = null;
   let referralCode: string | null = null;
@@ -238,6 +247,7 @@ export async function quote(env: Env, items: { variantId: number; quantity: numb
       const res = evaluateCoupon(rule, lines.map((l) => ({ category_id: l.categoryId, line_total: l.lineTotal })), phone);
       if (!res.ok) throw new ApiError(422, "coupon", COUPON_MESSAGES[res.reason].en, COUPON_MESSAGES[res.reason].bn);
       discount = res.discount;
+      couponFreeDelivery = Boolean(res.freeDelivery);
       couponId = row.id;
       appliedCode = row.code;
     } else {
@@ -258,13 +268,19 @@ export async function quote(env: Env, items: { variantId: number; quantity: numb
     }
   }
 
+  // Delivery: free when every item ships free or a free-delivery coupon applies; otherwise the charge is
+  // auto-calculated from the customer's area (and may still be free over the area's free-delivery amount).
+  let freeDelivery: FreeDeliveryReason | null = lines.length > 0 && lines.every((l) => l.freeDelivery) ? "products" : couponFreeDelivery ? "coupon" : null;
   let zone: Quote["zone"] = null;
   let fee = 0;
   if (address) {
     const z = resolveZone(await loadZones(env), address.division_id, address.district_id, address.upazila_id);
     if (!z) throw E.badRequest("We don't deliver to this area yet.", "এই এলাকায় এখনো ডেলিভারি দেওয়া হয় না।");
-    fee = deliveryFee(z, subtotal - discount);
     zone = { code: z.code, name_en: z.name_en, name_bn: z.name_bn, eta_en: z.eta_en, eta_bn: z.eta_bn };
+    if (!freeDelivery) {
+      fee = deliveryFee(z, subtotal - discount);
+      if (fee === 0) freeDelivery = "threshold";
+    }
   }
   const tax = await getSetting(env, "tax");
   const vat = vatFor(subtotal - discount, tax);
@@ -278,6 +294,7 @@ export async function quote(env: Env, items: { variantId: number; quantity: numb
     referralCode,
     zone,
     deliveryFee: fee,
+    freeDelivery,
     vat: vat.vat,
     vatInclusive: tax.inclusive,
     total: subtotal - discount + fee + vat.addToTotal,

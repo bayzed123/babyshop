@@ -15,6 +15,8 @@ export default async function home(el) {
     return;
   }
   const heroes = data.banners.filter((b) => b.placement === "hero");
+  const offers = data.banners.filter((b) => b.placement === "offer");
+  const marketing = data.banners.filter((b) => b.placement === "marketing");
   const top = cats.categories.filter((c) => !c.parent_id);
   const zone = cfg.zones.find((z) => z.free_shipping_min);
 
@@ -41,6 +43,11 @@ export default async function home(el) {
       </div>
     </section>
 
+    ${offers.length ? html`<section class="container section offers">${offers.map((b) => html`<a class="offer-banner ${b.color ?? "peach"}" href="${b.link_url || "/shop"}">
+        ${b.image_url ? html`<img src="${b.image_url}" alt="" loading="lazy" width="220" height="220">` : ""}
+        <span class="offer-text"><b>${L(b, "title")}</b>${b.subtitle_en ? html`<span>${L(b, "subtitle")}</span>` : ""}</span>
+        <span class="btn primary">${L(b, "cta") || t("shop")} ${icon("chevron")}</span></a>`)}</section>` : ""}
+
     <section class="container section">
       <div class="section-head"><h2>${t("shopByCategory")}</h2></div>
       <div class="cat-tiles">
@@ -56,6 +63,10 @@ export default async function home(el) {
         ${Object.entries(AGE_LABELS).map(([code, l]) => html`<a class="age-tile ${AGE_COLORS[code]}" href="/shop?age=${code}"><span class="age-emoji" aria-hidden="true">${{ "0-6m": "👶", "6-12m": "🍼", "1-3y": "🧸", "3-5y": "🎨" }[code]}</span><b>${tt(l)}</b></a>`)}
       </div>
     </section>
+
+    ${marketing.length ? html`<section class="container section"><div class="promo-cards">${marketing.map((b) => html`<a class="promo-card ${b.color ?? "sky"}" href="${b.link_url || "/shop"}">
+        <span class="promo-text"><b>${L(b, "title")}</b>${b.subtitle_en ? html`<span>${L(b, "subtitle")}</span>` : ""}<span class="link">${L(b, "cta") || t("shop")} →</span></span>
+        ${b.image_url ? html`<img src="${b.image_url}" alt="" loading="lazy" width="200" height="200">` : ""}</a>`)}</div></section>` : ""}
 
     <section class="container section">
       <div class="section-head"><h2>${t("newArrivals")}</h2><a href="/shop?sort=newest">${t("viewAll")} ${icon("chevron")}</a></div>

@@ -19,6 +19,7 @@ export const categories = [
   { slug: "toys-learning", code: "TOY", en: "Toys & Learning", bn: "খেলনা ও শেখা", color: "peach", descEn: "Age-appropriate toys that help little ones play and learn.", descBn: "বয়স উপযোগী খেলনা — খেলতে খেলতে শেখা।" },
   { slug: "soft-toys", parent: "toys-learning", code: "TOY", en: "Soft Toys", bn: "নরম খেলনা", color: "peach" },
   { slug: "learning-toys", parent: "toys-learning", code: "TOY", en: "Learning Toys", bn: "শিক্ষামূলক খেলনা", color: "lavender" },
+  { slug: "ride-on-toys", parent: "toys-learning", code: "TOY", en: "Ride-on Toys", bn: "রাইড-অন খেলনা", color: "sky", descEn: "Motorbikes, rickshaws, jeeps and trikes little ones can ride.", descBn: "ছোটদের চালানোর মোটরসাইকেল, রিকশা, জিপ ও ট্রাইসাইকেল।" },
   { slug: "nursery-bedding", code: "NUR", en: "Nursery & Bedding", bn: "নার্সারি ও বিছানা", color: "lavender", descEn: "Cosy sleep and nursery essentials.", descBn: "আরামের ঘুম ও নার্সারির প্রয়োজনীয় জিনিস।" },
   { slug: "bath-skincare", code: "BTH", en: "Bath & Skincare", bn: "গোসল ও ত্বকের যত্ন", color: "sky", descEn: "Gentle bath-time and skincare basics.", descBn: "কোমল গোসল ও ত্বকের যত্নের জিনিস।" },
   { slug: "gift-sets", code: "GFT", en: "Gift Sets", bn: "গিফট সেট", color: "pink", descEn: "Ready-to-gift hampers for baby showers, aqiqah and birthdays.", descBn: "বেবি শাওয়ার, আকিকা ও জন্মদিনের জন্য তৈরি উপহার।" },
@@ -37,6 +38,62 @@ export const zones = [
 const cloSizes = (colors) => [
   ["0–3 M", "0-6m"], ["3–6 M", "0-6m"], ["6–9 M", "6-12m"], ["9–12 M", "6-12m"],
 ].flatMap(([size, age]) => colors.map((color) => ({ size, age, color })));
+
+/**
+ * Ride-on toys with studio-rendered product photos (scripts/render-toys.mjs). Prices, stock and specs are
+ * sample values — edit them in Admin → Products. `delivery: "free"` shows how a free-delivery product looks.
+ * Also added to existing shops by worker/migrations/0003_ride_on_toys.sql.
+ */
+export const rideOnProducts = [
+  {
+    slug: "kids-electric-motorcycle", cat: "ride-on-toys", brand: "PlayJoy", en: "Kids Electric Motorcycle with Training Wheels", bn: "বাচ্চাদের ইলেকট্রিক মোটরসাইকেল (ট্রেনিং চাকাসহ)", price: 9800,
+    ages: ["3-5y"], featured: 1, gift: 1, images: ["/img/products/kids-electric-motorcycle.webp", "/img/products/kids-electric-motorcycle-blue.webp"],
+    materialEn: "Plastic body, rubber-look wheels, rechargeable battery", materialBn: "প্লাস্টিক বডি, রাবার-লুক চাকা, রিচার্জেবল ব্যাটারি",
+    careEn: "Charge after every ride; keep indoors and dry. Adult supervision needed.", careBn: "প্রতিবার চালানোর পর চার্জ দিন; ঘরে শুকনো জায়গায় রাখুন। বড়দের তত্ত্বাবধান প্রয়োজন।",
+    descEn: "A battery ride-on sports bike with headlight, forward/reverse and removable training wheels.", descBn: "হেডলাইট, সামনে/পেছনে চলা ও খোলা যায় এমন ট্রেনিং চাকাসহ ব্যাটারিচালিত স্পোর্টস বাইক।",
+    variants: [{ size: "Standard", color: "Red", stock: 4 }, { size: "Standard", color: "Blue", stock: 3 }],
+  },
+  {
+    slug: "commando-motorcycle", cat: "ride-on-toys", brand: "PlayJoy", en: "Commando Army Ride-on Motorcycle", bn: "কমান্ডো আর্মি রাইড-অন মোটরসাইকেল", price: 12500, delivery: "free",
+    ages: ["3-5y"], featured: 1, images: ["/img/products/commando-motorcycle.webp"],
+    materialEn: "Plastic body, knobbly wheels, rechargeable battery", materialBn: "প্লাস্টিক বডি, খাঁজকাটা চাকা, রিচার্জেবল ব্যাটারি",
+    careEn: "Charge after every ride; keep indoors and dry. Adult supervision needed.", careBn: "প্রতিবার চালানোর পর চার্জ দিন; ঘরে শুকনো জায়গায় রাখুন। বড়দের তত্ত্বাবধান প্রয়োজন।",
+    descEn: "An army-style ride-on bike with side boxes, luggage rack and training wheels.", descBn: "সাইড বক্স, লাগেজ র‍্যাক ও ট্রেনিং চাকাসহ আর্মি স্টাইলের রাইড-অন বাইক।",
+    variants: [{ size: "Standard", color: "Olive green", stock: 3 }],
+  },
+  {
+    slug: "baby-rickshaw", cat: "ride-on-toys", brand: "PlayJoy", en: "Baby Pedal Rickshaw", bn: "বেবি প্যাডেল রিকশা", price: 6900,
+    ages: ["3-5y"], gift: 1, featured: 1, images: ["/img/products/baby-rickshaw.webp"],
+    materialEn: "Steel frame, plastic seat and hood", materialBn: "স্টিল ফ্রেম, প্লাস্টিক সিট ও হুড",
+    careEn: "Wipe clean; keep out of rain.", careBn: "মুছে পরিষ্কার রাখুন; বৃষ্টিতে রাখবেন না।",
+    descEn: "A pedal rickshaw in real rickshaw colours — one child pedals, a friend or doll rides behind.", descBn: "আসল রিকশার রঙে প্যাডেল রিকশা — একজন চালাবে, পেছনে বন্ধু বা পুতুল বসবে।",
+    variants: [{ size: "Standard", color: "Multicolour", stock: 5 }],
+  },
+  {
+    slug: "ride-on-jeep", cat: "ride-on-toys", brand: "PlayJoy", en: "Kids Ride-on Jeep", bn: "বাচ্চাদের রাইড-অন জিপ", price: 18500,
+    ages: ["3-5y"], images: ["/img/products/ride-on-jeep.webp"],
+    materialEn: "Plastic body, rechargeable battery", materialBn: "প্লাস্টিক বডি, রিচার্জেবল ব্যাটারি",
+    careEn: "Charge after every ride; keep indoors and dry. Adult supervision needed.", careBn: "প্রতিবার চালানোর পর চার্জ দিন; ঘরে শুকনো জায়গায় রাখুন। বড়দের তত্ত্বাবধান প্রয়োজন।",
+    descEn: "A battery ride-on jeep with headlights, windscreen, roll bar and spare wheel.", descBn: "হেডলাইট, উইন্ডস্ক্রিন, রোল বার ও স্পেয়ার চাকাসহ ব্যাটারিচালিত রাইড-অন জিপ।",
+    variants: [{ size: "Standard", color: "White", stock: 2 }],
+  },
+  {
+    slug: "kids-tricycle", cat: "ride-on-toys", brand: "PlayJoy", en: "Kids Tricycle with Basket", bn: "বাস্কেটসহ বাচ্চাদের ট্রাইসাইকেল", price: 3200,
+    ages: ["1-3y", "3-5y"], gift: 1, images: ["/img/products/kids-tricycle.webp"],
+    materialEn: "Steel frame, plastic wheels and basket", materialBn: "স্টিল ফ্রেম, প্লাস্টিক চাকা ও বাস্কেট",
+    careEn: "Wipe clean; check the bolts now and then.", careBn: "মুছে পরিষ্কার রাখুন; মাঝে মাঝে নাট-বল্টু দেখে নিন।",
+    descEn: "A classic trike with pedals on the front wheel, a rear step and a small basket.", descBn: "সামনের চাকায় প্যাডেল, পেছনে দাঁড়ানোর জায়গা ও ছোট বাস্কেটসহ ট্রাইসাইকেল।",
+    variants: [{ size: "Standard", color: "Red", stock: 8 }],
+  },
+  {
+    slug: "sit-on-excavator", cat: "ride-on-toys", brand: "PlayJoy", en: "Sit-on Toy Excavator", bn: "বসে চালানোর খেলনা এক্সকাভেটর", price: 4800,
+    ages: ["1-3y", "3-5y"], images: ["/img/products/sit-on-excavator.webp"],
+    materialEn: "Plastic body and wheels", materialBn: "প্লাস্টিক বডি ও চাকা",
+    careEn: "Wipe clean with a damp cloth.", careBn: "ভেজা কাপড়ে মুছে পরিষ্কার করুন।",
+    descEn: "A sit-on digger with a turning seat and a working arm that scoops sand.", descBn: "ঘোরানো যায় এমন সিট ও বালি তোলার হাতসহ বসে চালানোর এক্সকাভেটর।",
+    variants: [{ size: "Standard", color: "Yellow", stock: 6 }],
+  },
+];
 
 export const products = [
   {
@@ -172,6 +229,7 @@ export const products = [
     descEn: "Everything for the big day number one, wrapped and ready.", descBn: "প্রথম জন্মদিনের সবকিছু, মোড়ানো ও প্রস্তুত।",
     variants: [{ size: "12–18 M", age: "1-3y", color: "", stock: 4 }],
   },
+  ...rideOnProducts,
 ];
 
 export const banners = [
@@ -184,6 +242,23 @@ export const banners = [
     placement: "hero", titleEn: "Gifts they'll actually use", titleBn: "কাজের উপহার, মনের মতো",
     subEn: "Baby shower, aqiqah or first birthday — try our gift finder.", subBn: "বেবি শাওয়ার, আকিকা বা প্রথম জন্মদিন — গিফট ফাইন্ডার দেখুন।",
     ctaEn: "Find a gift", ctaBn: "উপহার খুঁজুন", link: "/gift-finder", color: "lavender", sort: 2, image: "/img/products/welcome-baby-hamper.svg",
+  },
+  {
+    placement: "offer", titleEn: "Ride-on week: free delivery on the Commando bike", titleBn: "রাইড-অন সপ্তাহ: কমান্ডো বাইকে ফ্রি ডেলিভারি",
+    subEn: "Motorbikes, rickshaws and jeeps for 3–5 years. Cash on Delivery.", subBn: "৩–৫ বছরের জন্য মোটরসাইকেল, রিকশা ও জিপ। ক্যাশ অন ডেলিভারি।",
+    ctaEn: "Shop ride-ons", ctaBn: "রাইড-অন দেখুন", link: "/shop/ride-on-toys", color: "sky", sort: 1, image: "/img/products/commando-motorcycle.webp",
+  },
+  {
+    placement: "marketing", titleEn: "Baby rickshaw", titleBn: "বেবি রিকশা", subEn: "Real rickshaw colours, pedal powered.", subBn: "আসল রিকশার রঙ, প্যাডেলে চলে।",
+    ctaEn: "See it", ctaBn: "দেখুন", link: "/product/baby-rickshaw", color: "yellow", sort: 1, image: "/img/products/baby-rickshaw.webp",
+  },
+  {
+    placement: "marketing", titleEn: "Kids electric motorcycle", titleBn: "বাচ্চাদের ইলেকট্রিক মোটরসাইকেল", subEn: "Red or blue, with training wheels.", subBn: "লাল বা নীল, ট্রেনিং চাকাসহ।",
+    ctaEn: "See it", ctaBn: "দেখুন", link: "/product/kids-electric-motorcycle", color: "peach", sort: 2, image: "/img/products/kids-electric-motorcycle.webp",
+  },
+  {
+    placement: "popup", titleEn: "Welcome! ৳100 off your first order", titleBn: "স্বাগতম! প্রথম অর্ডারে ৳১০০ ছাড়", subEn: "Use code WELCOME100 on orders over ৳1,500.", subBn: "৳১,৫০০+ অর্ডারে WELCOME100 কোড ব্যবহার করুন।",
+    ctaEn: "Start shopping", ctaBn: "কেনাকাটা শুরু করুন", link: "/shop", color: "pink", sort: 1, image: "/img/products/plush-teddy-bear.svg", active: 0,
   },
 ];
 
