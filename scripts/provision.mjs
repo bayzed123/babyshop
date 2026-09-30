@@ -5,7 +5,7 @@
  *   1. Finds or creates the D1 database, KV namespace and R2 bucket for this Worker
  *   2. Writes their IDs into wrangler.toml (the bindings DB / KV / MEDIA)
  *   3. Applies D1 migrations
- *   4. Seeds the database the first time only (when the settings table is empty)
+ *   4. Seeds the database the first time only (when the categories table is empty)
  *   5. Creates the first Super Admin if ADMIN_USERNAME (or ADMIN_EMAIL) + ADMIN_PASSWORD are set and no admin exists
  *
  * Needs CLOUDFLARE_API_TOKEN + CLOUDFLARE_ACCOUNT_ID in the environment (GitHub secrets in CI).
@@ -105,7 +105,9 @@ const count = (sql) => {
 };
 
 // ---------- Seed (first run only) ----------
-if (freshDb || count("SELECT COUNT(*) AS n FROM settings") === 0) {
+// The seed always creates categories (settings rows only appear once an admin saves a setting), so an empty
+// categories table means a database that has never been seeded.
+if (freshDb || count("SELECT COUNT(*) AS n FROM categories") === 0) {
   log("Seeding categories, delivery zones, settings, banners and starter products (no certifications, reviews or sales counts)");
   wrangler(["d1", "execute", "DB", "--remote", "--file=dist-seed/seed.sql"]);
 } else log("Database already seeded — skipping seed (your admin edits are kept)");
