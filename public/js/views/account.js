@@ -1,7 +1,7 @@
 // Customer account: sign in / register / reset (mobile number), orders with tracking, wishlist, saved addresses,
 // gift registries (shareable), returns, refer-a-friend, reorder reminders, profile.
 import { t, L, lang, money, num, date } from "../i18n.js";
-import { $, $$, api, html, icon, raw, errMsg, toast, me, wishlist, bindGeo, showFieldErrors, overlay, turnstile } from "../core.js";
+import { $, $$, api, html, icon, raw, errMsg, toast, me, wishlist, bindGeo, showFieldErrors, overlay, turnstile, config } from "../core.js";
 import { productGrid, bindCards, emptyState } from "../ui.js";
 
 const TABS = ["orders", "wishlist", "addresses", "registries", "returns", "referral", "reminders", "profile"];
@@ -189,7 +189,9 @@ async function referral(body) {
   const r = await api("/me/referral");
   if (!r.enabled) { body.innerHTML = String(html`<p class="muted">—</p>`); return; }
   const code = r.referral.code;
-  const msg = lang() === "bn" ? `জামিল শপ বিডি থেকে প্রথম অর্ডারে ৳${r.referral.friend_discount} ছাড় পেতে আমার কোড ${code} ব্যবহার করুন: ${location.origin}` : `Use my code ${code} for ৳${r.referral.friend_discount} off your first order at ${location.origin}`;
+  const { store, brand } = await config();
+  const shop = lang() === "bn" ? store.name_bn || brand.name.bn : store.name_en || brand.name.en;
+  const msg = lang() === "bn" ? `${shop} থেকে প্রথম অর্ডারে ৳${r.referral.friend_discount} ছাড় পেতে আমার কোড ${code} ব্যবহার করুন: ${location.origin}` : `Use my code ${code} for ৳${r.referral.friend_discount} off your first order at ${shop}: ${location.origin}`;
   body.innerHTML = String(html`<div class="card pad referral">
     <h2>${t("referralHeadline", { friend: num(r.referral.friend_discount), reward: num(r.referral.reward) })}</h2>
     <p class="muted">${t("referralSub", { min: num(r.minOrder) })}</p>

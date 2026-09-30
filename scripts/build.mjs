@@ -49,7 +49,10 @@ const vars = {
   PHONE: brand.contact.phone,
   DEFAULT_LANG: brand.defaultLang,
   JSONLD_STORE: JSON.stringify(jsonLdStore).replace(/</g, "\\u003c"),
-  CSS_VARS: Object.entries(brand.colors).map(([k, v]) => `--${k.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`)}:${v}`).join(";"),
+  // brand.json colours → CSS variables used by store.css / admin.css (injected after the stylesheet, so they win).
+  CSS_VARS: [["yellow", "yellow"], ["mint", "mint"], ["lavender", "lavender"], ["peach", "peach"], ["sky", "sky"], ["pink", "pink"], ["primary", "primary"], ["primary-d", "primaryDark"], ["ink", "ink"]]
+    .map(([css, key]) => `--${css}:${brand.colors[key]}`).join(";"),
+  ADMIN_CSS_VARS: `--a-primary:${brand.colors.primary};--a-primary-deep:${brand.colors.primaryDark}`,
 };
 const fill = (s) => s.replace(/\{\{(\w+)\}\}/g, (m, k) => (k in vars ? vars[k] : m));
 function walk(dir) {

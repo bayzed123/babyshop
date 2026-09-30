@@ -39,7 +39,7 @@ export const msg = (d) => (d && typeof d === "object" ? d[lang()] ?? d.en : "");
 export const errMsg = (e) => (e instanceof ApiErr ? e.message : t("loadError"));
 
 // ---------- Session & permissions ----------
-export const session = { admin: null, perms: new Set() };
+export const session = { admin: null, perms: new Set(), brand: null };
 export const can = (p) => session.perms.has(p);
 
 // ---------- Toasts ----------

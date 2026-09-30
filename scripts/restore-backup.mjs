@@ -21,7 +21,7 @@ if (!file) {
 const backup = JSON.parse(readFileSync(file, "utf8"));
 const tables = backup?.tables;
 if (!tables || typeof tables !== "object") {
-  console.error("✖ Not a Zamil Shop BD backup file (missing \"tables\").");
+  console.error("✖ Not a shop backup file (missing \"tables\").");
   process.exit(1);
 }
 
