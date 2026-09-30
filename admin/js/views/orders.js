@@ -173,7 +173,7 @@ async function openOrder(id, onChange) {
           <a class="btn call" href="${d.contact.tel}">${icon("phone")} ${t("call")} ${o.customer_phone}</a>
           ${Object.entries(d.contact.whatsapp).map(([k, w]) => html`<a class="btn wa sm" target="_blank" rel="noopener" href="${w.url}" title="${w.text}">${icon("whatsapp")} ${tt(WA_LABELS[k] ?? { en: k, bn: k })}</a>`)}
         </div>
-        ${canUpdate && awaitingCall ? html`<div class="one-tap" style="margin-top:10px">
+        ${canUpdate && awaitingCall && !d.attempts.some((a) => a.outcome === "confirmed") ? html`<div class="one-tap" style="margin-top:10px">
           <button class="btn" data-attempt="no_answer">📵 ${t("noAnswer")}</button>
           <button class="btn primary" data-attempt="confirmed">✓ ${t("confirmedCall")}</button>
           <button class="btn danger" data-attempt="declined">✗ ${t("declined")}</button></div>` : ""}
