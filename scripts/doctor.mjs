@@ -15,6 +15,7 @@
 import { appendFileSync, readdirSync, readFileSync } from "node:fs";
 
 const TOML = readFileSync("worker/wrangler.toml", "utf8");
+const BRAND_NAME = JSON.parse(readFileSync("worker/src/brand.json", "utf8")).name.en;
 const WORKER = process.env.WORKER_NAME || /^name\s*=\s*"([^"]+)"/m.exec(TOML)?.[1] || "zamil-shop-bd";
 const DB_NAME = `${WORKER}-db`;
 const KV_TITLE = `${WORKER}-kv`;
@@ -159,7 +160,7 @@ if (!siteUrl) {
   const get = async (path, accept = "*/*") => {
     const t = Date.now();
     try {
-      const res = await fetch(siteUrl + path, { headers: { accept, "user-agent": "zamil-shop-doctor" }, redirect: "follow" });
+      const res = await fetch(siteUrl + path, { headers: { accept, "user-agent": `${WORKER}-doctor` }, redirect: "follow" });
       const text = await res.text();
       return { res, text, ms: Date.now() - t };
     } catch (e) {
@@ -211,7 +212,7 @@ const warns = rows.filter((r) => r.status === "warn");
 console.log(`\n${fails.length ? "❌" : warns.length ? "⚠️ " : "✅"} ${rows.length - fails.length - warns.length} passed, ${warns.length} warning(s), ${fails.length} problem(s)`);
 if (process.env.GITHUB_STEP_SUMMARY) {
   const esc = (s) => String(s ?? "").replace(/\|/g, "\\|").replace(/\n/g, " ");
-  let md = `## 🩺 Zamil Shop BD doctor\n\n**${fails.length ? "❌ Needs attention" : warns.length ? "⚠️ Working, with warnings" : "✅ All good"}** — ${rows.length - fails.length - warns.length} passed, ${warns.length} warning(s), ${fails.length} problem(s)${siteUrl ? ` · ${siteUrl}` : ""}\n`;
+  let md = `## 🩺 ${BRAND_NAME} doctor\n\n**${fails.length ? "❌ Needs attention" : warns.length ? "⚠️ Working, with warnings" : "✅ All good"}** — ${rows.length - fails.length - warns.length} passed, ${warns.length} warning(s), ${fails.length} problem(s)${siteUrl ? ` · ${siteUrl}` : ""}\n`;
   for (const s of [...new Set(rows.map((r) => r.section))]) {
     md += `\n### ${s}\n\n| | Check | Result | How to fix |\n|---|---|---|---|\n`;
     for (const r of rows.filter((x) => x.section === s)) md += `| ${{ ok: "✅", warn: "⚠️", fail: "❌" }[r.status]} | ${esc(r.check)} | ${esc(r.detail)} | ${r.status === "ok" ? "" : esc(r.fix)} |\n`;

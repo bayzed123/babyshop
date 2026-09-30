@@ -1,7 +1,7 @@
 // Dashboard home: first-run checklist, Health Check strip, "Needs your attention today" with one-tap
 // call / WhatsApp, KPIs, monthly sales chart, recent orders and top sellers.
 import { t, num, money, dt, lang, tt } from "../i18n.js";
-import { html, icon, api, pill, errorState, skeleton, errMsg, riskBadge, toast, msg, can } from "../core.js";
+import { html, icon, api, pill, errorState, skeleton, errMsg, riskBadge, toast, msg, can, session } from "../core.js";
 
 let chartLib;
 const loadChart = () =>
@@ -31,7 +31,7 @@ export default async function dashboard(view) {
   const delta = (c, label) => html`<span class="delta ${c >= 0 ? "up" : "down"}">${c >= 0 ? "▲" : "▼"} ${num(Math.abs(c))}% ${label}</span>`;
   const hour = new Date().getHours();
   const hi = lang() === "bn" ? (hour < 12 ? "শুভ সকাল" : "শুভেচ্ছা") : hour < 12 ? "Good morning" : "Hello";
-  const store = lang() === "bn" ? "জামিল শপ বিডি" : "Zamil Shop BD";
+  const store = session.brand?.name[lang()] ?? session.brand?.name.en ?? "";
 
   const kpi = (href, c, ico, label, value, extra) => html`<a class="card kpi" href="${href}" style="--c:var(${c});text-decoration:none;color:inherit"><div class="ico">${icon(ico)}</div><div class="label">${label}</div><div class="value">${value}</div>${extra}</a>`;
 

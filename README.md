@@ -65,6 +65,7 @@ required. Step-by-step: **[docs/SETUP.md](docs/SETUP.md)**.
 |---|---|
 | [docs/SPECIFICATION.md](docs/SPECIFICATION.md) | The full A–Z specification (sections 1–20): architecture diagram, data model tables, API, flows, glossary, assumptions |
 | [docs/SETUP.md](docs/SETUP.md) | Local development, Cloudflare + GitHub setup, secrets, custom domain, going live checklist |
+| [docs/WHITELABEL.md](docs/WHITELABEL.md) | Rebrand or set up a copy for another client: every file and line to change, every secret and where to get it (`node scripts/whitelabel.mjs` prints current line numbers) |
 | [docs/SECURITY.md](docs/SECURITY.md) | NIST CSF mapping, controls, incident response, D1 backup & restore |
 | [docs/BUILD-PROMPT.md](docs/BUILD-PROMPT.md) | The original build brief this project implements |
 

@@ -2,7 +2,7 @@
 // and a detail panel with risk badge + reasons, courier history, confirmation/dispatch gates, one-tap
 // call / WhatsApp templates, call logging, courier booking, invoice PDF, refunds and history.
 import { t, num, money, dt, lang, tt } from "../i18n.js";
-import { html, raw, icon, api, $, $$, can, toast, msg, errMsg, listTable, slideOver, pill, confirmDialog, debounce, showErrors, exportCsv, riskBadge } from "../core.js";
+import { html, raw, icon, api, $, $$, can, toast, msg, errMsg, listTable, slideOver, pill, confirmDialog, debounce, showErrors, exportCsv, riskBadge, session } from "../core.js";
 
 const STATUSES = ["pending", "confirmation_attempted", "confirmed", "packed", "shipped", "delivered", "cancelled", "refused", "returned"];
 const FLOW = ["pending", "confirmed", "packed", "shipped", "delivered"];
@@ -298,11 +298,11 @@ function printLabel(d) {
   const o = d.order;
   const cod = o.payment_status === "paid" ? 0 : o.total;
   const area = document.getElementById("print-area");
-  area.innerHTML = String(html`<div class="ship-label"><div style="display:flex;justify-content:space-between"><b>Zamil Shop BD</b><span>${o.courier_partner ?? ""} ${o.tracking_id ?? ""}</span></div>
+  area.innerHTML = String(html`<div class="ship-label"><div style="display:flex;justify-content:space-between"><b>${session.brand?.name.en ?? ""}</b><span>${o.courier_partner ?? ""} ${o.tracking_id ?? ""}</span></div>
     <hr><div class="big">${o.customer_name}</div><div class="big">${o.customer_phone}</div><div style="margin:6px 0">${o.area}<br>${o.upazila}, ${o.district}</div>
     <hr><div style="display:flex;justify-content:space-between"><span>${o.invoice_no ?? o.order_no}</span><span class="big">COD ৳${cod}</span></div>
     <div style="font-size:11px;margin-top:6px">${d.items.map((i) => `${i.sku} ×${i.quantity}`).join(" · ")}</div>
-    <div style="font-size:11px;margin-top:6px">From: Zamil Shop BD · ${d.contact.storePhone ?? ""}</div></div>`);
+    <div style="font-size:11px;margin-top:6px">From: ${session.brand?.name.en ?? ""} · ${d.contact.storePhone ?? ""}</div></div>`);
   area.hidden = false;
   window.print();
   setTimeout(() => (area.innerHTML = ""), 500);

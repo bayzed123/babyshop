@@ -120,6 +120,6 @@ jobs:
       - name: Summary
         if: always() && steps.deploy.outputs.url != ''
         run: |
-          echo "### 🚀 Zamil Shop BD deployed" >> "$GITHUB_STEP_SUMMARY"
+          echo "### 🚀 $(node -p "require('./worker/src/brand.json').name.en") deployed" >> "$GITHUB_STEP_SUMMARY"
           echo "- Store: ${{ steps.deploy.outputs.url }}" >> "$GITHUB_STEP_SUMMARY"
           echo "- Admin: ${{ steps.deploy.outputs.url }}/admin/" >> "$GITHUB_STEP_SUMMARY"

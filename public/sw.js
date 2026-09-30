@@ -40,7 +40,7 @@ self.addEventListener("push", (e) => {
   e.waitUntil(
     (async () => {
       const sub = await self.registration.pushManager.getSubscription();
-      let msg = { title: "Zamil Shop BD", body: "", url: "/" };
+      let msg = { title: "{{BRAND_NAME_EN}}", body: "", url: "/" };
       try {
         const r = await fetch(`/api/push/latest?endpoint=${encodeURIComponent(sub?.endpoint ?? "")}`);
         msg = await r.json();

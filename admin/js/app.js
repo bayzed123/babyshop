@@ -56,7 +56,7 @@ const VIEWS = {
   staff: () => import("./views/resource.js"),
 };
 
-let brand = { name: { en: "Zamil Shop BD", bn: "জামিল শপ বিডি" }, logo: "/img/logo.svg" };
+let brand = { name: { en: "{{BRAND_NAME_EN}}", bn: "{{BRAND_NAME_BN}}" }, logo: "/img/logo.svg" }; // filled from brand.json at build time
 let lastSeen = new Date(Date.now() - 86400_000).toISOString();
 let started = false;
 
@@ -66,6 +66,7 @@ async function boot() {
     const cfg = await fetch("/api/config").then((r) => r.json());
     brand = { name: { en: cfg.store.name_en || cfg.brand.name.en, bn: cfg.store.name_bn || cfg.brand.name.bn }, logo: cfg.store.logo_url || "/img/logo.svg" };
   } catch { /* keep defaults */ }
+  session.brand = brand;
   try {
     const me = await api("/auth/me");
     session.admin = me.admin;

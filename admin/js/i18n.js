@@ -84,7 +84,7 @@ const dict = {
   },
 };
 
-// ---- Zamil Shop BD additions ----
+// ---- Shop additions ----
 Object.assign(dict.en, {
   registries: "Gift registries", abandoned: "Abandoned checkouts", returns: "Returns & refunds", landing: "Campaign pages", referrals: "Referrals",
   s_confirmation_attempted: "Call attempted", s_refused: "Refused at delivery", s_returned: "Returned",
