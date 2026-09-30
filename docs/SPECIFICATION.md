@@ -1003,7 +1003,7 @@ babyshop/
 ├── admin/                       admin SPA (index.html, css/, js/ + views/)
 ├── scripts/                     build, seed data, generated art, ride-on toy renders, geo data, create-admin, provision, sync-secrets
 ├── tests/                       unit/, integration/, e2e/, fixtures/
-├── .github/workflows/ci-deploy.yml
+├── .github/workflows/ci.yml, deploy.yml, doctor.yml
 └── docs/                        SPECIFICATION.md, SETUP.md, SECURITY.md, BUILD-PROMPT.md
 ```
 

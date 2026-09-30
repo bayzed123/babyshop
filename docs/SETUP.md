@@ -50,13 +50,21 @@ npm run dev                                     # http://localhost:8787 and /adm
    | `ADMIN_USERNAME`, `ADMIN_PASSWORD` (≥ 10 chars), `ADMIN_NAME` | recommended | first Super Admin, created on the first deploy only |
 
 4. Optional repository **variables** (same page, *Variables* tab): `WORKER_NAME` (default `zamil-shop-bd`), `PUBLIC_URL` (e.g. `https://zamilshopbd.com`).
-5. **Push to `main`.** The workflow `.github/workflows/ci-deploy.yml`:
-   - builds, type-checks, runs Vitest and Playwright;
-   - `scripts/provision.mjs` finds or creates D1 `zamil-shop-bd-db`, KV `zamil-shop-bd-kv` and R2 `zamil-shop-bd-media`, writes their IDs into `worker/wrangler.toml` (in the runner only), applies migrations, seeds the database **only when it's empty**, and creates the first Super Admin **only when there is none**;
-   - deploys with `wrangler deploy`, then `scripts/sync-secrets.mjs` copies any integration secrets you added to GitHub into the Worker;
-   - smoke-tests `/api/health` and prints the store and admin URLs in the run summary.
+5. **Push to `main`.** Three workflows in `.github/workflows/` take it from there:
+   - **CI** (`ci.yml`, every push and pull request) builds, type-checks and runs Vitest and Playwright.
+   - **Deploy** (`deploy.yml`) starts when CI passes on `main` (or by hand: *Actions → Deploy → Run workflow*) and deploys exactly the commit CI tested:
+     - `scripts/provision.mjs` finds or creates D1 `zamil-shop-bd-db`, KV `zamil-shop-bd-kv` and R2 `zamil-shop-bd-media`, writes their IDs into `worker/wrangler.toml` (in the runner only), applies migrations, seeds the database **only when it has no categories yet**, and creates the first Super Admin **only when there is none**;
+     - `wrangler deploy`, then `scripts/sync-secrets.mjs` copies any integration secrets you added to GitHub into the Worker;
+     - smoke-tests `/api/health`, runs the doctor, and prints the store and admin URLs in the run summary.
+   - **Doctor** (`doctor.yml`) runs every morning at 08:17 Bangladesh time and by hand. It is read-only and checks:
+     - the GitHub secrets, and whether the Cloudflare token is valid and has the Workers, D1, KV and R2 permissions;
+     - that the Worker, database, KV and R2 exist, and that every migration is applied;
+     - the starter data, delivery zones, Super Admin and low stock, plus which Worker secrets are set;
+     - the live storefront, admin, API, a product page and photo, the delivery fee, robots.txt, the sitemap and the security headers.
 
-Pull requests run the tests only; nothing is deployed until merge. Use GitHub's *production* environment protection rules if you want a manual approval before deploys.
+     Each problem comes with the exact fix, in the run's *Summary* tab. A failed scheduled run emails the repository owner. Run it locally with `CLOUDFLARE_API_TOKEN=… CLOUDFLARE_ACCOUNT_ID=… node scripts/doctor.mjs`, or `SITE_URL=https://… node scripts/doctor.mjs --live-only` for the website checks only.
+
+Pull requests run CI only; nothing is deployed until merge. Use GitHub's *production* environment protection rules if you want a manual approval before deploys. **If a deploy fails, run Doctor first**: it names the missing permission, resource or migration.
 
 ## 4. Manual setup (alternative)
 
