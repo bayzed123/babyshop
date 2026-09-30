@@ -73,7 +73,7 @@ On phones the sidebar and rail become drawers; tables become stacked cards.
 | Abandoned checkouts | to follow up / still filling in / recovered / not interested; call, WhatsApp, send recovery link; CSV |
 | Returns & refunds | approve → item received (order becomes Returned, stock back) → refund sent; reject with reason; CSV |
 | Products | list with stock health, badges, waiting count; editor: bilingual copy, category, brand, age ranges, price & discount, photos, variants with auto SKUs, certifications with documents, size chart, consumable + reorder days, gift flag, SEO; duplicate, Trash, CSV import/export, notify waiting |
-| Categories | nested tree, drag to reorder / nest, SKU code per category, CSV |
+| Categories | nested tree, drag to reorder / nest, SKU code per category; **New category** button; All / Active / Inactive tabs; one-tap Active ⇄ Inactive switch per row (sub-categories follow their parent, with a confirmation) — inactive categories are hidden from the shop menu, home tiles, category page and sitemap while their products stay on sale; CSV |
 | Inventory | per-SKU stock, ±1/+5 and bulk set, reason, stock history, waiting list, CSV |
 | Customers | order counts, 🟢/🟡/🔴 badge with reason, block/unblock, CSV |
 | Coupons | flat/percent, minimum order, expiry, usage limits, per-customer limit; recovery & referral coupons listed |
@@ -1201,7 +1201,7 @@ All request/response bodies are JSON unless noted. Errors: `{ "code", "en", "bn"
 | `GET /orders` (`status=needs_call`, `risk=`, `flagged=1`, `format=csv`, …) · `GET/PUT /orders/:id` · `POST /orders/:id/status` · `POST /orders/:id/attempts` · `POST /orders/bulk-status` · `POST /orders/:id/fraud-check` · `GET /orders/:id/invoice.pdf` · `POST /orders/:id/refund` · `POST /orders/:id/notify` · `DELETE /orders/:id` · `POST /orders/:id/restore` | orders |
 | `GET /products` (`format=csv`) · `GET/PUT/DELETE /products/:id` · `POST /products` · `GET /products/sku-preview` · `POST /products/:id/duplicate` · `POST /products/:id/restore` · `POST /products/:id/notify-waiting` · `POST /products/import` (CSV body) | products |
 | `GET/POST /{categories,customers,coupons,banners,landing,reviews,zones,staff}` · `GET/PUT/DELETE /{…}/:id` · `POST /{…}/:id/restore` (all with `format=csv`) | generic CRUD |
-| `PUT /categories/reorder` · `POST /staff/:id/reset-2fa` · `GET /roles` | tree order, staff |
+| `PUT /categories/reorder` · `PUT /categories/:id/status` (`{ is_active, include_sub }`) · `POST /staff/:id/reset-2fa` · `GET /roles` | tree order, category Active/Inactive, staff |
 | `GET /inventory` · `POST /inventory/adjust` · `GET /inventory/log` · `GET /stock-notify` | stock |
 | `GET /abandoned` · `POST /abandoned/:id` (`contacted`, `recovered`, `ignored`, `reopen`, `send_recovery`) | abandoned checkouts |
 | `GET /returns` · `PUT /returns/:id` · `GET /registries` · `GET/PUT /registries/:id` · `GET /referrals` · `PUT /referrals/:id` | operations |

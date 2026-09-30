@@ -117,7 +117,7 @@ async function buildFilter(env: AppEnv["Bindings"], f: z.infer<typeof listQuery>
   const where = ["p.status = 'active'", "p.deleted_at IS NULL"];
   const args: unknown[] = [];
   if (f.category) {
-    const cat = await env.DB.prepare("SELECT id FROM categories WHERE slug = ? AND deleted_at IS NULL").bind(f.category).first<{ id: number }>();
+    const cat = await env.DB.prepare("SELECT id FROM categories WHERE slug = ? AND deleted_at IS NULL AND is_active = 1").bind(f.category).first<{ id: number }>();
     if (!cat) return null;
     const ids = await expandCategoryIds(env, [cat.id]);
     where.push(`p.category_id IN (${ids.map(() => "?").join(",")})`);

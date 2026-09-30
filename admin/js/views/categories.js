@@ -1,4 +1,5 @@
-// Categories: nested tree (with the 2–4 letter SKU code) with drag-to-reorder (drop on the top edge = before, middle = make sub-category).
+// Categories: nested tree (with the 2–4 letter SKU code) with drag-to-reorder (drop on the top edge = before,
+// middle = make sub-category), All / Active / Inactive tabs and a one-tap Active ⇄ Inactive switch on every row.
 import { t, tt, num, lang } from "../i18n.js";
 import { html, icon, api, $, $$, can, toast, msg, errMsg, slideOver, fieldHtml, readForm, showErrors, confirmDialog, skeleton, errorState, bindUploads, emptyState, exportCsv } from "../core.js";
 
@@ -13,29 +14,82 @@ const fields = (parents) => [
   { name: "image_url", label: { en: "Tile image (optional — otherwise a product photo is used)", bn: "টাইলের ছবি (ঐচ্ছিক)" }, type: "image", span: 2 },
   { name: "color", label: { en: "Tile colour", bn: "টাইলের রং" }, type: "select", allowEmpty: true, options: [["yellow", { en: "Soft yellow", bn: "হালকা হলুদ" }], ["mint", { en: "Mint", bn: "মিন্ট" }], ["lavender", { en: "Lavender", bn: "ল্যাভেন্ডার" }], ["peach", { en: "Peach", bn: "পিচ" }], ["sky", { en: "Sky", bn: "আকাশি" }], ["pink", { en: "Pink", bn: "গোলাপি" }]] },
   { name: "sort_order", label: { en: "Order", bn: "ক্রম" }, type: "number", default: 0 },
-  { name: "is_active", label: { en: "Show in shop", bn: "দোকানে দেখাবে" }, type: "checkbox", default: 1 },
+  { name: "is_active", label: { en: "Active — show this category in the shop", bn: "চালু — ক্যাটাগরিটি দোকানে দেখাবে" }, type: "checkbox", default: 1, span: 2 },
 ];
 
 export default async function categories(view) {
-  view.innerHTML = String(html`<div class="page-head"><h1>${t("categories")}</h1><button class="btn" id="csv">${icon("download")} ${t("exportCsv")}</button>${can("categories.write") ? html`<button class="btn primary" id="add">${icon("plus")} ${t("add")}</button>` : ""}</div>
-    <div class="card"><p class="muted small">${t("dragHint")}</p><div id="tree">${skeleton(5)}</div>${can("categories.write") ? html`<div style="margin-top:16px;text-align:right"><button class="btn primary" id="save-order" hidden>${t("saveOrder")}</button></div>` : ""}</div>`);
+  const L = (en, bn) => (lang() === "bn" ? bn : en);
+  const canWrite = can("categories.write");
+  let filter = "all"; // all | active | inactive
+  view.innerHTML = String(html`<div class="page-head"><h1>${t("categories")}</h1><button class="btn" id="csv">${icon("download")} ${t("exportCsv")}</button>${canWrite ? html`<button class="btn primary" id="add">${icon("plus")} ${L("New category", "নতুন ক্যাটাগরি")}</button>` : ""}</div>
+    <div class="chips" id="cat-tabs" style="margin-bottom:18px"></div>
+    <div class="card"><p class="muted small" id="cat-hint"></p><div id="tree">${skeleton(5)}</div>${canWrite ? html`<div style="margin-top:16px;text-align:right"><button class="btn primary" id="save-order" hidden>${t("saveOrder")}</button></div>` : ""}</div>`);
   let items = [];
   const load = async () => {
     try { items = (await api("/categories?limit=200&sort=sort_order")).items; draw(); }
     catch (e) { $("#tree", view).innerHTML = String(errorState(errMsg(e))); $("[data-retry]", view).onclick = load; }
   };
   const name = (c) => (lang() === "bn" ? c.name_bn : c.name_en);
+  const isOn = (c) => Boolean(c.is_active);
+  const descendants = (id) => {
+    const out = [];
+    const walk = (pid) => items.filter((c) => c.parent_id === pid).forEach((c) => { out.push(c); walk(c.id); });
+    walk(id);
+    return out;
+  };
+  const pathOf = (c) => {
+    const parts = [];
+    let p = items.find((x) => x.id === c.parent_id);
+    while (p) { parts.unshift(name(p)); p = items.find((x) => x.id === p.parent_id); }
+    return parts.join(" › ");
+  };
+  const statusCtl = (c) => canWrite
+    ? html`<button type="button" class="switch" role="switch" aria-checked="${isOn(c) ? "true" : "false"}" data-toggle="${c.id}" title="${isOn(c) ? L("Tap to turn off (hide from the shop)", "বন্ধ করতে চাপুন (দোকানে লুকাবে)") : L("Tap to turn on (show in the shop)", "চালু করতে চাপুন (দোকানে দেখাবে)")}"><span class="knob" aria-hidden="true"></span>${isOn(c) ? t("active") : L("Inactive", "বন্ধ")}</button>`
+    : html`<span class="pill ${isOn(c) ? "active" : "inactive"}">${isOn(c) ? t("active") : L("Inactive", "বন্ধ")}</span>`;
+  const rowHtml = (c, { flat = false } = {}) => html`<div class="row">${flat || !canWrite ? "" : html`<button type="button" class="handle" aria-label="Drag">${icon("grip")}</button>`}<b style="flex:1;min-width:140px">${name(c)} <span class="muted small">${c.code}</span>${flat && c.parent_id ? html`<span class="muted small cat-path">${pathOf(c)} ›</span>` : ""}</b>
+        <span class="muted small">${num(c.product_count)} ${L(c.product_count === 1 ? "product" : "products", "পণ্য")}</span>${statusCtl(c)}
+        ${canWrite ? html`<button class="btn sm" data-add-sub="${c.id}" aria-label="${t("addSub")}" title="${t("addSub")}">${icon("plus")}</button><button class="btn sm" data-edit="${c.id}" aria-label="${t("edit")}">${icon("edit")}</button>` : ""}
+        ${can("categories.delete") ? html`<button class="btn sm" data-del="${c.id}" aria-label="${t("delete")}">${icon("trash")}</button>` : ""}</div>`;
   const draw = () => {
-    if (!items.length) { $("#tree", view).innerHTML = String(emptyState()); return; }
+    const nOn = items.filter(isOn).length;
+    $("#cat-tabs", view).innerHTML = String(html`${[["all", t("all"), items.length], ["active", t("active"), nOn], ["inactive", L("Inactive", "বন্ধ"), items.length - nOn]].map(([k, l, n]) => html`<button class="chip" data-tab="${k}" aria-pressed="${filter === k}">${l} <span class="n">${num(n)}</span></button>`)}`);
+    $("#cat-hint", view).textContent = filter === "all"
+      ? `${t("dragHint")} ${L("Inactive categories are hidden from the shop menu and category page; their products stay on sale (set a product to Draft to hide it).", "বন্ধ ক্যাটাগরি দোকানের মেনু ও ক্যাটাগরি পেজে দেখাবে না; এর পণ্যগুলো বিক্রি চলবে (পণ্য লুকাতে সেটি ড্রাফট করুন)।")}`
+      : filter === "active" ? L("Categories customers can see in the shop.", "যে ক্যাটাগরিগুলো গ্রাহক দোকানে দেখতে পান।") : L("Hidden from the shop. Tap the switch to turn one back on.", "দোকানে লুকানো। আবার চালু করতে সুইচে চাপুন।");
+    if (!items.length) { $("#tree", view).innerHTML = String(emptyState(L("No categories yet.", "এখনো কোনো ক্যাটাগরি নেই।"), L("Tap “New category” to add your first one.", "প্রথমটি যোগ করতে “নতুন ক্যাটাগরি” চাপুন।"))); return; }
+    if (filter !== "all") {
+      const list = items.filter((c) => (filter === "active" ? isOn(c) : !isOn(c))).sort((a, b) => (pathOf(a) + name(a)).localeCompare(pathOf(b) + name(b)));
+      $("#tree", view).innerHTML = list.length
+        ? String(html`<ul class="tree">${list.map((c) => html`<li class="tree-item ${isOn(c) ? "" : "is-off"}" data-id="${c.id}">${rowHtml(c, { flat: true })}</li>`)}</ul>`)
+        : String(emptyState(filter === "active" ? L("No active categories.", "কোনো চালু ক্যাটাগরি নেই।") : L("No inactive categories.", "কোনো বন্ধ ক্যাটাগরি নেই।"), L("Everything here is up to date.", "সব ঠিক আছে।")));
+      return;
+    }
     const kids = (pid) => items.filter((c) => (c.parent_id ?? null) === pid).sort((a, b) => a.sort_order - b.sort_order || a.id - b.id);
-    const branch = (pid) => html`<ul class="tree">${kids(pid).map((c) => html`<li class="tree-item" data-id="${c.id}" draggable="${can("categories.write")}">
-      <div class="row"><button type="button" class="handle" aria-label="Drag">${icon("grip")}</button><b style="flex:1">${name(c)} <span class="muted small">${c.code}</span></b>
-        <span class="muted small">${num(c.product_count)} ${lang() === "bn" ? "পণ্য" : "products"}</span>${c.is_active ? "" : html`<span class="pill inactive">off</span>`}
-        ${can("categories.write") ? html`<button class="btn sm" data-add-sub="${c.id}" aria-label="${t("addSub")}" title="${t("addSub")}">${icon("plus")}</button><button class="btn sm" data-edit="${c.id}" aria-label="${t("edit")}">${icon("edit")}</button>` : ""}
-        ${can("categories.delete") ? html`<button class="btn sm" data-del="${c.id}" aria-label="${t("delete")}">${icon("trash")}</button>` : ""}</div>
+    const branch = (pid) => html`<ul class="tree">${kids(pid).map((c) => html`<li class="tree-item ${isOn(c) ? "" : "is-off"}" data-id="${c.id}" draggable="${canWrite}">
+      ${rowHtml(c)}
       ${kids(c.id).length ? branch(c.id) : ""}</li>`)}</ul>`;
     $("#tree", view).innerHTML = String(branch(null));
     bindDrag();
+  };
+
+  /** One tap: Active ⇄ Inactive. Sub-categories follow their parent (asked first when there are any). */
+  const toggle = async (btn) => {
+    const c = items.find((x) => x.id === Number(btn.dataset.toggle));
+    const turnOn = !isOn(c);
+    const subs = descendants(c.id).filter((d) => isOn(d) !== turnOn);
+    if (subs.length) {
+      const text = turnOn
+        ? L(`Turn on "${name(c)}" and its ${subs.length} sub-categor${subs.length === 1 ? "y" : "ies"}? They will show in the shop again.`, `"${name(c)}" ও এর ${num(subs.length)}টি সাব-ক্যাটাগরি চালু করবেন? আবার দোকানে দেখাবে।`)
+        : L(`Turn off "${name(c)}" and its ${subs.length} sub-categor${subs.length === 1 ? "y" : "ies"}? They will be hidden from the shop menu. Products stay on sale.`, `"${name(c)}" ও এর ${num(subs.length)}টি সাব-ক্যাটাগরি বন্ধ করবেন? দোকানের মেনু থেকে লুকাবে। পণ্য বিক্রি চলবে।`);
+      if (!(await confirmDialog(text, { danger: !turnOn, okText: turnOn ? L("Turn on", "চালু করুন") : L("Turn off", "বন্ধ করুন") }))) return;
+    }
+    btn.disabled = true;
+    try {
+      const r = await api(`/categories/${c.id}/status`, { method: "PUT", body: { is_active: turnOn, include_sub: true } });
+      for (const id of r.ids) { const x = items.find((i) => i.id === id); if (x) x.is_active = turnOn ? 1 : 0; }
+      toast(msg(r));
+      draw();
+    } catch (err) { btn.disabled = false; toast(errMsg(err), "err"); }
   };
 
   let dragId = null;
@@ -80,7 +134,7 @@ export default async function categories(view) {
     const parents = items.filter((c) => c.id !== id).map((c) => [c.id, name(c)]);
     const F = fields(parents);
     const { panel, close, body } = slideOver({
-      title: id ? `${t("edit")}: ${name(item)}` : t("add"),
+      title: id ? `${t("edit")}: ${name(item)}` : L("New category", "নতুন ক্যাটাগরি"),
       body: html`<form id="cf" class="grid2" novalidate>${F.map((f) => fieldHtml(f, item[f.name] ?? (id ? undefined : f.default)))}</form>`,
       footer: html`<button class="btn" data-close>${t("cancel")}</button><button class="btn primary" type="submit" form="cf">${t("save")}</button>`,
     });
@@ -99,6 +153,10 @@ export default async function categories(view) {
   };
 
   view.addEventListener("click", async (e) => {
+    const tab = e.target.closest("[data-tab]");
+    if (tab) { filter = tab.dataset.tab; return draw(); }
+    const sw = e.target.closest("[data-toggle]");
+    if (sw) return toggle(sw);
     const b = e.target.closest("[data-edit],[data-del],[data-add-sub],#add,#save-order,#csv");
     if (!b) return;
     try {

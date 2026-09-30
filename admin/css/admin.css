@@ -337,3 +337,15 @@ textarea.input { min-height: 100px; resize: vertical; }
 .bar { height: 8px; border-radius: 8px; box-shadow: var(--inset); overflow: hidden; margin: 4px 0; }
 .bar i { display: block; height: 100%; border-radius: 8px; background: var(--grad); }
 a.chip { text-decoration: none; color: inherit; }
+/* Category Active / Inactive switch */
+.tree-item > .row { flex-wrap: wrap; }
+.tree-item.is-off > .row { opacity: .72; background: repeating-linear-gradient(135deg, #f4f1f8, #f4f1f8 8px, #fbfafc 8px, #fbfafc 16px); }
+.cat-path { display: block; font-weight: 400; }
+.switch { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 12px 0 6px; border: 0; border-radius: 999px; background: #ECE8F3; color: #5B5470; font-weight: 700; font-size: .85rem; cursor: pointer; }
+.switch .knob { width: 38px; height: 22px; border-radius: 999px; background: #C9C2D8; position: relative; transition: background .15s; flex: none; }
+.switch .knob::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: transform .15s; }
+.switch[aria-checked="true"] { background: #DDF5EA; color: #11704B; }
+.switch[aria-checked="true"] .knob { background: #1F9D6B; }
+.switch[aria-checked="true"] .knob::after { transform: translateX(16px); }
+.switch:disabled { cursor: progress; opacity: .6; }
+@media (prefers-reduced-motion: reduce) { .switch .knob, .switch .knob::after { transition: none; } }

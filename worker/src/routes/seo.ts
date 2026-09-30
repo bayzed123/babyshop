@@ -222,7 +222,7 @@ app.get("/product/:slug", async (c) => {
 
 app.get("/shop/:slug", async (c) => {
   const b = base(c);
-  const cat = await c.env.DB.prepare("SELECT slug, name_en, name_bn, description_en FROM categories WHERE slug = ? AND deleted_at IS NULL").bind(c.req.param("slug")).first<{ slug: string; name_en: string; name_bn: string; description_en: string | null }>();
+  const cat = await c.env.DB.prepare("SELECT slug, name_en, name_bn, description_en FROM categories WHERE slug = ? AND deleted_at IS NULL AND is_active = 1").bind(c.req.param("slug")).first<{ slug: string; name_en: string; name_bn: string; description_en: string | null }>();
   if (!cat) return spa(c);
   const { results } = await c.env.DB.prepare(
     "SELECT p.slug, p.name_en FROM products p JOIN categories c ON c.id = p.category_id WHERE (c.slug = ? OR c.parent_id = (SELECT id FROM categories WHERE slug = ?)) AND p.status='active' AND p.deleted_at IS NULL ORDER BY p.sold_count DESC LIMIT 20",
