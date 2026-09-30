@@ -53,6 +53,12 @@ Push to `main` → GitHub Actions tests everything, finds-or-creates D1/KV/R2, m
 first Super Admin, deploys and syncs integration secrets. Only `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` are
 required. Step-by-step: **[docs/SETUP.md](docs/SETUP.md)**.
 
+| Workflow | When | What |
+|---|---|---|
+| **CI** (`ci.yml`) | every push & pull request | build, TypeScript, unit + integration tests, Playwright E2E |
+| **Deploy** (`deploy.yml`) | after CI passes on `main`, or by hand | provision, migrate, deploy, sync secrets, smoke test, doctor |
+| **Doctor** (`doctor.yml`) | daily 08:17 BD time, or by hand | read-only health check of the token and its permissions, the Cloudflare resources, migrations, data and the live site, with a fix for each problem |
+
 ## Documentation
 
 | Document | What's in it |
