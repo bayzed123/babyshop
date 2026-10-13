@@ -7,6 +7,12 @@ main = "src/index.ts"
 compatibility_date = "2026-08-15"
 compatibility_flags = ["nodejs_compat"]
 
+# Custom domain is already active on Cloudflare for the production Worker.
+# Keep this in sync if the domain is recreated through Wrangler.
+routes = [
+  { pattern = "zamilshopbd.shop", custom_domain = true }
+]
+
 [assets]
 directory = "../dist"
 binding = "ASSETS"
@@ -16,7 +22,7 @@ run_worker_first = ["/api/*", "/media/*", "/sitemap.xml", "/robots.txt", "/feeds
 
 [vars]
 ENVIRONMENT = "production"
-PUBLIC_URL = ""   # set to https://your-domain once a custom domain is live (CI variable PUBLIC_URL overrides this)
+PUBLIC_URL = "https://zamilshopbd.shop"
 
 [[d1_databases]]
 binding = "DB"
@@ -44,11 +50,5 @@ crons = ["*/10 * * * *", "0 21 * * *"]
 
 [observability]
 enabled = true
-
-# Custom domain — uncomment after the zone is on Cloudflare DNS (docs/SETUP.md → Custom domain).
-# routes = [
-#   { pattern = "zamilshopbd.com", custom_domain = true },
-#   { pattern = "www.zamilshopbd.com", custom_domain = true }
-# ]
 
 # Local development overrides ENVIRONMENT / PUBLIC_URL and secrets through worker/.dev.vars (git-ignored).
