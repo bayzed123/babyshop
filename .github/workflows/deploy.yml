@@ -36,7 +36,7 @@ jobs:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       WORKER_NAME: ${{ vars.WORKER_NAME || 'zamil-shop-bd' }}
-      PUBLIC_URL: ${{ vars.PUBLIC_URL }}
+      PUBLIC_URL: ${{ vars.PUBLIC_URL || 'https://zamilshopbd.shop' }}
     steps:
       - uses: actions/checkout@v4
         with:
