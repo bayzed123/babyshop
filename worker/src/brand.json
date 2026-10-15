@@ -24,7 +24,7 @@
     "email": "hello@zamilshopbd.com",
     "hours": { "en": "Every day, 10am – 9pm", "bn": "প্রতিদিন, সকাল ১০টা – রাত ৯টা" }
   },
-  "tracking": { "gtmId": "GTM-NPMST6FP", "metaPixelId": "853533951150305" },
+  "tracking": { "gtmId": "GTM-NPMST6FP", "metaPixelId": "853533951150305", "ga4Id": "G-P3B2P581H1" },
   "social": { "facebook": "", "instagram": "", "tiktok": "" },
   "colors": {
     "yellow": "#FFE9A8",
