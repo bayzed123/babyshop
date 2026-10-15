@@ -26,7 +26,7 @@ export default defineConfig({
       `npx wrangler d1 execute DB --local -c worker/wrangler.toml --persist-to ${persist} --file=dist-seed/seed.sql`,
       `node scripts/create-admin.mjs "E2E Processor" e2e order_processor 01899999999 > ${persist}-admin.sql`,
       `npx wrangler d1 execute DB --local -c worker/wrangler.toml --persist-to ${persist} --file=${persist}-admin.sql`,
-      `npx wrangler dev -c worker/wrangler.toml --port ${PORT} --ip 127.0.0.1 --persist-to ${persist} --var ENVIRONMENT:development --var PUBLIC_URL:`,
+      `npx wrangler dev --local -c worker/wrangler.toml --port ${PORT} --ip 127.0.0.1 --persist-to ${persist} --var ENVIRONMENT:development --var PUBLIC_URL:`,
     ].join(" && "),
     url: `http://127.0.0.1:${PORT}/api/health`,
     timeout: 180_000,

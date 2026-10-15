@@ -120,7 +120,7 @@ export type ReferralSettings = typeof DEFAULT_REFERRAL;
 export const DEFAULT_INTEGRATIONS = {
   gtmId: BRAND.tracking.gtmId,
   metaPixelId: BRAND.tracking.metaPixelId,
-  ga4Id: "",
+  ga4Id: BRAND.tracking.ga4Id,
   googleAdsId: "",
   googleAdsLabel: "",
   clarityId: "",

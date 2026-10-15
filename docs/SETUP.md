@@ -128,6 +128,6 @@ Pathao `https://<domain>/api/webhooks/pathao` (signature = `PATHAO_WEBHOOK_SECRE
 - [ ] SMS gateway connected (needed for OTP — without it, COD orders always need a confirmation call).
 - [ ] Sample products replaced with real ones; certificates attached only where you truly hold them.
 - [ ] Staff accounts created with the right roles; Super Admin and Manager have 2FA.
-- [ ] Google Tag Manager, Meta Pixel / CAPI, GA4, Clarity IDs entered (GTM and the Pixel default to `tracking` in `worker/src/brand.json`); test with `META_TEST_EVENT_CODE`, then remove it.
+- [ ] Google Tag Manager, Meta Pixel / CAPI, GA4, Clarity IDs entered (GTM, the Pixel and GA4 default to `tracking` in `worker/src/brand.json`); test with `META_TEST_EVENT_CODE`, then remove it.
 - [ ] A test order placed, confirmed (invoice PDF opens), shipped and delivered end to end.
 - [ ] *Settings → Connected services & backups → Back up now* succeeds; nightly backups appear in R2 `backups/`.

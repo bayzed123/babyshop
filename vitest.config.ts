@@ -12,6 +12,8 @@ export default defineConfig(async () => {
       cloudflareTest({
         main: "./worker/src/index.ts",
         wrangler: { configPath: "./worker/wrangler.toml" },
+        // The Workers AI binding is remote-only; tests never call it, so don't open a remote proxy (needs Cloudflare credentials).
+        remoteBindings: false,
         miniflare: {
           bindings: {
             ENVIRONMENT: "development",

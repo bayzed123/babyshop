@@ -100,7 +100,7 @@ describe("banners", () => {
 
   it("exposes the Tag Manager and Meta Pixel IDs to the storefront by default", async () => {
     const cfg = await call("/api/config");
-    expect(cfg.data.integrations).toMatchObject({ gtmId: "GTM-NPMST6FP", metaPixelId: "853533951150305" });
+    expect(cfg.data.integrations).toMatchObject({ gtmId: "GTM-NPMST6FP", metaPixelId: "853533951150305", ga4Id: "G-P3B2P581H1" });
   });
 
   it("rejects unknown placements", async () => {
