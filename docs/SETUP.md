@@ -105,7 +105,7 @@ None is required — COD and manual bKash/Nagad/Rocket work without any. The das
 | Bot protection | `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET` |
 | First admin without CI | `BOOTSTRAP_TOKEN` — then `POST /api/admin/auth/bootstrap`; delete the secret afterwards |
 
-Non-secret IDs (Meta Pixel ID, GA4 ID, Google Ads ID/label, Clarity ID, Cloudflare Web Analytics token) are entered in
+Non-secret IDs (Google Tag Manager ID, Meta Pixel ID, GA4 ID, Google Ads ID/label, Clarity ID, Cloudflare Web Analytics token) are entered in
 **Admin → Settings → Ads & tracking**.
 
 **Webhook URLs to register with providers:** Steadfast `https://<domain>/api/webhooks/steadfast` (Bearer = `STEADFAST_WEBHOOK_TOKEN`),
@@ -128,6 +128,6 @@ Pathao `https://<domain>/api/webhooks/pathao` (signature = `PATHAO_WEBHOOK_SECRE
 - [ ] SMS gateway connected (needed for OTP — without it, COD orders always need a confirmation call).
 - [ ] Sample products replaced with real ones; certificates attached only where you truly hold them.
 - [ ] Staff accounts created with the right roles; Super Admin and Manager have 2FA.
-- [ ] Meta Pixel / CAPI, GA4, Clarity IDs entered; test with `META_TEST_EVENT_CODE`, then remove it.
+- [ ] Google Tag Manager, Meta Pixel / CAPI, GA4, Clarity IDs entered (GTM and the Pixel default to `tracking` in `worker/src/brand.json`); test with `META_TEST_EVENT_CODE`, then remove it.
 - [ ] A test order placed, confirmed (invoice PDF opens), shipped and delivered end to end.
 - [ ] *Settings → Connected services & backups → Back up now* succeeds; nightly backups appear in R2 `backups/`.

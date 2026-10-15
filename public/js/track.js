@@ -23,6 +23,12 @@ export async function initTracking() {
   } catch {
     return;
   }
+  window.dataLayer = window.dataLayer || [];
+  if (integ.gtmId) {
+    // Google Tag Manager bootstrap (external script, no inline <script>, so the CSP stays strict).
+    window.dataLayer.push({ "gtm.start": Date.now(), event: "gtm.js" });
+    loadScript(`https://www.googletagmanager.com/gtm.js?id=${encodeURIComponent(integ.gtmId)}`);
+  }
   if (integ.metaPixelId) {
     // Standard Meta Pixel bootstrap (without an inline <script>, so the CSP stays strict).
     const f = window;
@@ -35,7 +41,6 @@ export async function initTracking() {
   }
   if (integ.ga4Id || integ.googleAdsId) {
     loadScript(`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(integ.ga4Id || integ.googleAdsId)}`);
-    window.dataLayer = window.dataLayer || [];
     window.gtag = function () { window.dataLayer.push(arguments); };
     window.gtag("js", new Date());
     if (integ.ga4Id) window.gtag("config", integ.ga4Id, { send_page_view: false });
@@ -60,6 +65,20 @@ export function track(name, { value, items = [], eventId = newEventId(name.toLow
   if (window.fbq) {
     const custom = value != null ? { value, currency: "BDT", content_ids: contentIds, content_type: "product", num_items: numItems } : {};
     window.fbq("track", name, custom, { eventID: eventId });
+  }
+  if (integ.gtmId) {
+    // Same event to Tag Manager as a GA4-style dataLayer event; the container decides which tags use it.
+    window.dataLayer.push({ ecommerce: null });
+    window.dataLayer.push({
+      event: GA4_NAMES[name] ?? (name === "PageView" ? "page_view" : name),
+      event_id: eventId,
+      ecommerce: {
+        currency: "BDT",
+        value,
+        transaction_id: transactionId,
+        items: items.map((i) => ({ item_id: i.sku, item_name: i.name, price: i.price, quantity: i.quantity ?? 1 })),
+      },
+    });
   }
   if (window.gtag && integ.ga4Id) {
     if (name === "PageView") window.gtag("event", "page_view", { page_location: location.href, page_title: document.title });

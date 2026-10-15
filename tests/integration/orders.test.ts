@@ -321,7 +321,7 @@ describe("order list exports & bulk actions", () => {
     const a = await call("/api/admin/attention", { cookie: admin });
     expect(a.data.confirmationCalls.length).toBeGreaterThan(0);
     const h = await call("/api/admin/health", { cookie: admin });
-    expect(h.data.lines.find((l: any) => l.key === "facebook").en).toContain("not connected yet");
+    expect(h.data.lines.find((l: any) => l.key === "facebook").en).toContain("browser only");
   });
 });
 

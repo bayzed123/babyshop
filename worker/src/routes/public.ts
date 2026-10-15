@@ -45,6 +45,7 @@ app.get("/config", async (c) => {
     store,
     ageRanges: AGE_RANGES.map((k) => ({ code: k, ...AGE_LABELS[k] })),
     integrations: {
+      gtmId: integrations.gtmId,
       metaPixelId: integrations.metaPixelId,
       ga4Id: integrations.ga4Id,
       googleAdsId: integrations.googleAdsId,

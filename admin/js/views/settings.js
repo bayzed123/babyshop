@@ -87,6 +87,7 @@ export default async function settings(view, { id }) {
       ${numInp("reward", L("Reward for the referrer (৳ coupon)", "রেফারকারীর রিওয়ার্ড (৳ কুপন)"), 0, 5000)}
       ${numInp("minOrder", L("Minimum order (৳)", "সর্বনিম্ন অর্ডার (৳)"), 0, 100000)}</div>`,
     integrations: () => html`<p class="muted small">${L("Only IDs go here. The Facebook Conversions API token is a secret your developer adds (META_CAPI_TOKEN).", "এখানে শুধু আইডি। ফেসবুক Conversions API টোকেন একটি secret — ডেভেলপার যোগ করবেন (META_CAPI_TOKEN)।")}</p><div class="grid2">
+      ${inp("gtmId", "Google Tag Manager ID", 'placeholder="GTM-XXXXXXX"')}
       ${inp("metaPixelId", "Meta (Facebook) Pixel ID", 'inputmode="numeric"', html`Conversions API: ${stat(C.metaCapi)}`)}
       ${inp("ga4Id", "Google Analytics 4 ID", 'placeholder="G-XXXXXXX"')}
       ${inp("googleAdsId", "Google Ads ID", 'placeholder="AW-XXXXXXXXX"')}${inp("googleAdsLabel", L("Google Ads purchase label", "Google Ads পারচেজ লেবেল"))}

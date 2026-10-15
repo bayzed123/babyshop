@@ -98,6 +98,11 @@ describe("banners", () => {
     expect(cfg.data.popup).toMatchObject({ title_en: "Test popup" });
   });
 
+  it("exposes the Tag Manager and Meta Pixel IDs to the storefront by default", async () => {
+    const cfg = await call("/api/config");
+    expect(cfg.data.integrations).toMatchObject({ gtmId: "GTM-NPMST6FP", metaPixelId: "853533951150305" });
+  });
+
   it("rejects unknown placements", async () => {
     const r = await call("/api/admin/banners", { method: "POST", cookie: admin, json: { placement: "promo", title_en: "Old", title_bn: "পুরনো" } });
     expect(r.res.status).toBe(422);
