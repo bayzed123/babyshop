@@ -48,6 +48,13 @@ const vars = {
   THEME_COLOR: brand.colors.theme,
   PHONE: brand.contact.phone,
   DEFAULT_LANG: brand.defaultLang,
+  // <noscript> fallbacks for visitors without JavaScript; the live scripts are loaded by public/js/track.js.
+  GTM_NOSCRIPT: brand.tracking?.gtmId
+    ? `<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=${brand.tracking.gtmId}" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>`
+    : "",
+  META_NOSCRIPT: brand.tracking?.metaPixelId
+    ? `<noscript><img height="1" width="1" style="display:none" alt="" src="https://www.facebook.com/tr?id=${brand.tracking.metaPixelId}&ev=PageView&noscript=1"></noscript>`
+    : "",
   JSONLD_STORE: JSON.stringify(jsonLdStore).replace(/</g, "\\u003c"),
   // brand.json colours → CSS variables used by store.css / admin.css (injected after the stylesheet, so they win).
   CSS_VARS: [["yellow", "yellow"], ["mint", "mint"], ["lavender", "lavender"], ["peach", "peach"], ["sky", "sky"], ["pink", "pink"], ["primary", "primary"], ["primary-d", "primaryDark"], ["ink", "ink"]]
@@ -90,7 +97,7 @@ const csp = [
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com",
   "img-src 'self' data: blob: https:",
-  "connect-src 'self' https://www.facebook.com https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://*.clarity.ms https://cloudflareinsights.com",
+  "connect-src 'self' https://www.facebook.com https://connect.facebook.net https://*.google-analytics.com https://*.analytics.google.com https://www.googletagmanager.com https://*.google.com https://*.doubleclick.net https://*.g.doubleclick.net https://*.clarity.ms https://cloudflareinsights.com",
   "frame-src https://challenges.cloudflare.com https://www.googletagmanager.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",

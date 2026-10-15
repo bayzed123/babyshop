@@ -118,7 +118,8 @@ export type ReferralSettings = typeof DEFAULT_REFERRAL;
 
 /** Non-secret tracking IDs. The Conversions API token is a Worker secret (META_CAPI_TOKEN). */
 export const DEFAULT_INTEGRATIONS = {
-  metaPixelId: "",
+  gtmId: BRAND.tracking.gtmId,
+  metaPixelId: BRAND.tracking.metaPixelId,
   ga4Id: "",
   googleAdsId: "",
   googleAdsLabel: "",
